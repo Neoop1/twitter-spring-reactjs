@@ -1,0 +1,3340 @@
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-server
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: config-server
+  template:
+    metadata:
+      labels:
+        app: config-server
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: config-server
+        image: neoop1/twitter-config-server:v0.8
+        ports:
+        - containerPort: 8888
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: config-server
+  name: config-server
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8888
+      targetPort: 8888
+  selector:
+    app: config-server
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lists-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: lists-service
+  template:
+    metadata:
+      labels:
+        app: lists-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: lists-service
+        image: neoop1/twitter-lists-service:latest
+        ports:
+        - containerPort: 8005
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8005
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8005
+              initialDelaySeconds: 40
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: lists-service
+  name: lists-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8005
+      targetPort: 8005
+  selector:
+    app: lists-service
+
+
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: notification-service
+        image: neoop1/twitter-notification-service:latest
+        ports:
+        - containerPort: 8007
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"       
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8007
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8007
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: notification-service
+  name: notification-service
+  namespace: twitter-website
+  annotations:
+        prometheus.io/scrape: 'true'
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8007
+      targetPort: 8007
+  selector:
+    app: notification-service
+
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: postgres
+  name: postgres
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres
+  type: NodePort
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-volume
+  labels:
+    type: local
+    app: postgres
+  namespace: twitter-website
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /data/postgresql
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    run: postgres
+  namespace: twitter-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:       
+      containers:
+        - name: postgres-server
+          image: postgres
+          args:
+             - -c
+             - max_connections=1000
+             - -c
+             - shared_buffers=1024MB
+          env:
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: postgres-username  
+
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: postgres-password
+
+          - name: PGDATA
+            value: "/data/postgres"
+
+          - name: POSTGRES_DB
+            value: user
+
+          - name:  POSTGRES_MULTIPLE_DATABASES
+            value: "tweet,chat,lists,notification,tag,topic"
+          readinessProbe:
+            exec:
+              command: ["psql", "-w", "-U", "postgres", "-d", "postgres", "-c", "SELECT 1"]
+            initialDelaySeconds: 75
+            timeoutSeconds: 2
+          livenessProbe:
+            exec:
+              command: ["psql", "-w", "-U", "postgres", "-d", "postgres", "-c", "SELECT 1"]
+            initialDelaySeconds: 100
+            timeoutSeconds: 2
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: postgres-stateful-data
+              mountPath: /data/postgres
+            - name: db-script
+              subPath: ./dbas/
+              mountPath: /docker-entrypoint-initdb.d
+      initContainers:
+          # DataBase Build script
+        - name: git-sync
+          image: registry.k8s.io/git-sync/git-sync:v4.2.3
+          imagePullPolicy: Always
+          args:
+            - '--repo=https://github.com/Neoop1/Test.git'
+            - '--branch=DBScript'
+            - '--depth=1'
+            - '--link=dbas'
+            - '--root=/git'
+            - '--one-time=true'
+          volumeMounts:
+            - name: db-script
+              mountPath: /git
+      
+      volumes:
+        - name: postgres-stateful-data
+          persistentVolumeClaim:
+            claimName: postgres-volume-claim
+        - name: db-script
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-volume-claim
+  labels:
+    app: postgres
+  namespace: twitter-website
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: twitter-website
+data:
+  postgres-username: cG9zdGdyZXM=
+  postgres-password: cm9vdA==
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: image-service
+  template:
+    metadata:
+      labels:
+        app: image-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: image-service
+        image: neoop1/twitter-image-service:latest
+        ports:
+        - containerPort: 8021
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: ZIPKIN_HOST
+          value: "zipkin-server"         
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8021
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8021
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: image-service
+  name: image-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8021
+      targetPort: 8021
+  selector:
+    app: image-service
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: websocket-service
+  template:
+    metadata:
+      labels:
+        app: websocket-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: websocket-service
+        image: neoop1/twitter-websocket-service:latest
+        ports:
+        - containerPort: 8022
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8022
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8022
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: websocket-service
+  name: websocket-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8022
+      targetPort: 8022
+  selector:
+    app: websocket-service
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tweet-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: tweet-service
+  template:
+    metadata:
+      labels:
+        app: tweet-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: tweet-service
+        image: neoop1/twitter-tweet-service:latest
+        ports:
+        - containerPort: 8002
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8002
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8002
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tweet-service
+  name: tweet-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8002
+      targetPort: 8002
+  selector:
+    app: tweet-service
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: user-service
+  name: user-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8001
+      targetPort: 8001
+  selector:
+    app: user-service
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: user-service
+        image: neoop1/twitter-user-service:latest
+        ports:
+        - containerPort: 8001
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8001
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8001
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 400m
+              memory: 256Mi
+            limits:
+              cpu: 600m
+              memory: 512Mi
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-server
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: eureka-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: eureka-server
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      restartPolicy: Always
+      containers:
+      - name: eureka-server
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+        image: neoop1/twitter-eureka-server
+        ports:
+        - containerPort: 8761
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: ZIPKIN_HOST
+          value: "zipkin"      
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: eureka-server
+  name: eureka-server
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8761
+      targetPort: 8761
+  selector:
+    app: eureka-server
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-volume
+  labels:
+    type: local
+    app: minio
+  namespace: twitter-website
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /data/minio
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  namespace: twitter-website
+  annotations:
+        prometheus.io/scrape: 'true'
+spec:
+  selector:
+    app: minio
+  ports:
+  - name: http
+    port: 9000
+    targetPort: 9000
+  - name: console
+    port: 9001
+    targetPort: 9001
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-secret
+  namespace: twitter-website
+data:
+  minio-username: bXlzZWNyZXR1c2Vy
+  minio-password : bXlzZWNyZXRwYXNzd29yZA==
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pv-claim
+  labels:
+    app: minio
+  namespace: twitter-website
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+
+
+
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: minio
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: minio-pv-claim
+      containers:
+      - name: minio
+        image: minio/minio:latest
+        command:
+           - /bin/bash
+           - -c
+        args:  
+        - minio server /data --console-address :9001
+        env:
+        - name: MINIO_ROOT_USER #minio-user
+          valueFrom:
+              secretKeyRef:
+                name: minio-secret                         
+                key: minio-username 
+        - name: MINIO_ROOT_PASSWORD #minio-password
+          valueFrom:
+              secretKeyRef:
+                name: minio-secret
+                key: minio-password 
+        - name: MINIO_DEFAULT_BUCKETS
+          value: "twitterclonestorage"
+        ports:
+        - containerPort: 9000
+        - containerPort: 9001
+        volumeMounts:
+        - name: storage 
+          mountPath: "/data"
+        readinessProbe:
+          httpGet:
+            path: /minio/health/ready
+            port: 9000
+          initialDelaySeconds: 120
+          periodSeconds: 20
+        # Liveness probe detects situations where MinIO server instance
+        # is not working properly and needs restart. Kubernetes automatically
+        # restarts the pods if liveness checks fail.
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: 9000
+          initialDelaySeconds: 120
+          periodSeconds: 20
+
+
+
+
+
+
+
+
+
+
+      #- name: createbuckets
+      #  image: minio/mc
+      #  command: ["sh", "-c"]
+      #  args:
+      #      - |
+      #        /usr/bin/mc alias set twitterminio http://minio:9000 minio-user minio-password;
+      #        /usr/bin/mc mb twitterminio/twitterclonestorage;
+      #        /usr/bin/mc anonymous set public twitterminio/twitterclonestorage;
+      #        exit 0;
+              
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: twitter-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      terminationGracePeriodSeconds: 10
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+      - name: rabbitmq-k8s
+        image: rabbitmq:3.9.11-management-alpine
+        ports:
+          - name: http
+            protocol: TCP
+            containerPort: 15672
+          - name: amqp
+            protocol: TCP
+            containerPort: 5672
+        livenessProbe:
+          exec:
+            command: ["rabbitmq-diagnostics", "status"]
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          timeoutSeconds: 15
+        readinessProbe:
+          exec:
+            command: ["rabbitmq-diagnostics", "ping"]
+          initialDelaySeconds: 20
+          periodSeconds: 60
+          timeoutSeconds: 10
+        imagePullPolicy: Always
+
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+    type: LoadBalancer
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: NodePort
+  ports:
+   - name: http
+     protocol: TCP
+     port: 15672
+     targetPort: 15672
+     nodePort: 31672
+   - name: amqp
+     protocol: TCP
+     port: 5672
+     targetPort: 5672
+     nodePort: 30672
+  selector:
+    app: rabbitmq
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: topic-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: topic-service
+  template:
+    metadata:
+      labels:
+        app: topic-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: topic-service
+        image: neoop1/twitter-topic-service:latest
+        ports:
+        - containerPort: 8003
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8003
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8003
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: topic-service
+  name: topic-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8003
+      targetPort: 8003
+  selector:
+    app: topic-service
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      hostname: zookeeper
+      containers:
+      - name: zookeeper
+        image: confluentinc/cp-zookeeper:7.0.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 2181
+        env:
+        - name: ZOOKEEPER_CLIENT_PORT
+          value: '2181'
+        - name: ZOOKEEPER_TICK_TIME
+          value: "2000"
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: zookeeper
+  name: zookeeper
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  ports:
+    - protocol: "TCP"
+      port: 2181
+      targetPort: 2181
+  selector:
+    app: zookeeper
+
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: twitter-website
+
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: twitter-website
+  name: ingressresource
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/cors-allow-headers: Content-Type, authorization
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS, DELETE"
+    nginx.ingress.kubernetes.io/cors-allow-origin: http://twitter.local
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+spec:
+  rules:
+  - host: twitter.local
+    http:
+      paths:
+        - path: "/"
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend
+              port:
+                number: 80
+                
+        - path: "/ui/v1"
+          pathType: Prefix
+          backend:
+            service:
+              name: api-gateway
+              port:
+                number: 8000
+
+
+        - path: "/websocket"
+          pathType: Prefix
+          backend:
+            service:
+              name: api-gateway
+              port:
+                number: 8000
+
+
+                
+
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    run: frontend
+  namespace: twitter-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 'neoop1/twitter-frontend:v0.8'
+          imagePullPolicy: Always
+          #resources:
+          #  requests:
+          #    cpu: 500m
+          #    memory: 256Mi
+          #  limits:
+          #    cpu: 700m
+          #    memory: 512Mi
+          ports:
+            - name: frontend
+              containerPort: 80
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: frontend
+  name: frontend
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 80
+      targetPort: 80
+  selector:
+    app: frontend
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tag-service
+  name: tag-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8004
+      targetPort: 8004
+  selector:
+    app: tag-service
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tag-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: tag-service
+  template:
+    metadata:
+      labels:
+        app: tag-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: tag-service
+        image: neoop1/twitter-tag-service:latest
+        ports:
+        - containerPort: 8004
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8004
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8004
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: email-service
+  name: email-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8020
+      targetPort: 8020
+  selector:
+    app: email-service
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: email-service
+  template:
+    metadata:
+      labels:
+        app: email-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: email-service
+        image: neoop1/twitter-email-service:latest
+        ports:
+        - containerPort: 8020
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: ZIPKIN_HOST
+          value: "zipkin"          
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8020
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8020
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: chat-service
+  name: chat-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8006
+      targetPort: 8006
+  selector:
+    app: chat-service
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: chat-service
+          image: neoop1/twitter-chat-service:latest
+          ports:
+          - containerPort: 8006
+          env:
+          - name: EUREKA_HOST
+            value: "eureka-server"
+          - name: CONFIG_SERVER_HOST
+            value: "config-server"
+          - name: DATASOURCE_HOST
+            value: "postgres"
+          - name: ZIPKIN_HOST
+            value: "zipkin"
+          - name: rabbitmq
+          readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8006
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+          livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8006
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: broker
+  name: broker
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 9092
+      targetPort: 9092
+  selector:
+    app: broker
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broker
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: broker
+  template:
+    metadata:
+      labels:
+        app: broker
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: broker
+          image: confluentinc/cp-kafka:7.0.1
+          ports:
+          - containerPort: 9092
+          #readinessProbe:
+          #  exec:
+          #    command: ["/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1"]
+          #livenessProbe:
+          #  exec:
+          #    command: ["/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1"]
+          env:
+          - name: KAFKA_BROKER_ID
+            value: "1"
+          - name: KAFKA_ZOOKEEPER_CONNECT
+            value: "zookeeper:2181"
+          - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+            value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT"
+          - name: KAFKA_ADVERTISED_LISTENERS
+            value: "PLAINTEXT://broker:9092"
+          - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+            value: "1"
+          - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+            value: "1"
+          - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+            value: "1"
+          resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zipkin
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: NodePort
+  ports:
+  - port: 9411
+    targetPort: 9411
+    nodePort: 32000
+  selector:
+    app: zipkin
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zipkin
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: zipkin
+  template:
+    metadata:
+      labels:
+        app: zipkin
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: zipkin
+        image: openzipkin/zipkin
+        ports:
+        - containerPort: 9411
+        resources:
+          requests:
+            cpu: 200m
+            memory: 180Mi
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        livenessProbe:
+            initialDelaySeconds:  30
+            tcpSocket:
+              port: 9411
+        readinessProbe:
+            initialDelaySeconds: 30
+            httpGet:
+              path: /health
+              port: 9411
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: api-gateway
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+        image: neoop1/twitter-api-gateway:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: EUREKA_HOST
+          value: eureka-server
+        - name: CONFIG_SERVER_HOST
+          value: config-server
+        - name: ZIPKIN_HOST
+          value: zipkin
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: twitter-website
+  annotations:
+        prometheus.io/scrape: 'true'
+spec:
+  type: ClusterIP
+  selector:
+    app: api-gateway
+  ports:
+  - protocol: "TCP"
+    port: 8000
+    targetPort: 8000
+  selector:
+    app: api-gateway
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-server
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: config-server
+  template:
+    metadata:
+      labels:
+        app: config-server
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: config-server
+        image: neoop1/twitter-config-server:v0.8
+        ports:
+        - containerPort: 8888
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: config-server
+  name: config-server
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8888
+      targetPort: 8888
+  selector:
+    app: config-server
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lists-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: lists-service
+  template:
+    metadata:
+      labels:
+        app: lists-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: lists-service
+        image: neoop1/twitter-lists-service:latest
+        ports:
+        - containerPort: 8005
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8005
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8005
+              initialDelaySeconds: 40
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: lists-service
+  name: lists-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8005
+      targetPort: 8005
+  selector:
+    app: lists-service
+
+
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: notification-service
+        image: neoop1/twitter-notification-service:latest
+        ports:
+        - containerPort: 8007
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"       
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8007
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8007
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: notification-service
+  name: notification-service
+  namespace: twitter-website
+  annotations:
+        prometheus.io/scrape: 'true'
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8007
+      targetPort: 8007
+  selector:
+    app: notification-service
+
+
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: postgres
+  name: postgres
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres
+  type: NodePort
+
+---
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-volume
+  labels:
+    type: local
+    app: postgres
+  namespace: twitter-website
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /data/postgresql
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    run: postgres
+  namespace: twitter-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:       
+      containers:
+        - name: postgres-server
+          image: postgres
+          args:
+             - -c
+             - max_connections=1000
+             - -c
+             - shared_buffers=1024MB
+          env:
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: postgres-username  
+
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: postgres-password
+
+          - name: PGDATA
+            value: "/data/postgres"
+
+          - name: POSTGRES_DB
+            value: user
+
+          - name:  POSTGRES_MULTIPLE_DATABASES
+            value: "tweet,chat,lists,notification,tag,topic"
+          readinessProbe:
+            exec:
+              command: ["psql", "-w", "-U", "postgres", "-d", "postgres", "-c", "SELECT 1"]
+            initialDelaySeconds: 75
+            timeoutSeconds: 2
+          livenessProbe:
+            exec:
+              command: ["psql", "-w", "-U", "postgres", "-d", "postgres", "-c", "SELECT 1"]
+            initialDelaySeconds: 100
+            timeoutSeconds: 2
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: postgres-stateful-data
+              mountPath: /data/postgres
+            - name: db-script
+              subPath: ./dbas/
+              mountPath: /docker-entrypoint-initdb.d
+      initContainers:
+          # DataBase Build script
+        - name: git-sync
+          image: registry.k8s.io/git-sync/git-sync:v4.2.3
+          imagePullPolicy: Always
+          args:
+            - '--repo=https://github.com/Neoop1/Test.git'
+            - '--branch=DBScript'
+            - '--depth=1'
+            - '--link=dbas'
+            - '--root=/git'
+            - '--one-time=true'
+          volumeMounts:
+            - name: db-script
+              mountPath: /git
+      
+      volumes:
+        - name: postgres-stateful-data
+          persistentVolumeClaim:
+            claimName: postgres-volume-claim
+        - name: db-script
+          emptyDir: {}
+---
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-volume-claim
+  labels:
+    app: postgres
+  namespace: twitter-website
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: twitter-website
+data:
+  postgres-username: cG9zdGdyZXM=
+  postgres-password: cm9vdA==
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: image-service
+  template:
+    metadata:
+      labels:
+        app: image-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: image-service
+        image: neoop1/twitter-image-service:latest
+        ports:
+        - containerPort: 8021
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: ZIPKIN_HOST
+          value: "zipkin-server"         
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8021
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8021
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: image-service
+  name: image-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8021
+      targetPort: 8021
+  selector:
+    app: image-service
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: websocket-service
+  template:
+    metadata:
+      labels:
+        app: websocket-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: websocket-service
+        image: neoop1/twitter-websocket-service:latest
+        ports:
+        - containerPort: 8022
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8022
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8022
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: websocket-service
+  name: websocket-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8022
+      targetPort: 8022
+  selector:
+    app: websocket-service
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tweet-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: tweet-service
+  template:
+    metadata:
+      labels:
+        app: tweet-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: tweet-service
+        image: neoop1/twitter-tweet-service:latest
+        ports:
+        - containerPort: 8002
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8002
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8002
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tweet-service
+  name: tweet-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8002
+      targetPort: 8002
+  selector:
+    app: tweet-service
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: user-service
+  name: user-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8001
+      targetPort: 8001
+  selector:
+    app: user-service
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: user-service
+        image: neoop1/twitter-user-service:latest
+        ports:
+        - containerPort: 8001
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8001
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8001
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 400m
+              memory: 256Mi
+            limits:
+              cpu: 600m
+              memory: 512Mi
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-server
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: eureka-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: eureka-server
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      restartPolicy: Always
+      containers:
+      - name: eureka-server
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+        image: neoop1/twitter-eureka-server
+        ports:
+        - containerPort: 8761
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: ZIPKIN_HOST
+          value: "zipkin"      
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: eureka-server
+  name: eureka-server
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8761
+      targetPort: 8761
+  selector:
+    app: eureka-server
+
+---
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-volume
+  labels:
+    type: local
+    app: minio
+  namespace: twitter-website
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /data/minio
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  namespace: twitter-website
+  annotations:
+        prometheus.io/scrape: 'true'
+spec:
+  selector:
+    app: minio
+  ports:
+  - name: http
+    port: 9000
+    targetPort: 9000
+  - name: console
+    port: 9001
+    targetPort: 9001
+  type: ClusterIP
+---
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-secret
+  namespace: twitter-website
+data:
+  minio-username: bXlzZWNyZXR1c2Vy
+  minio-password : bXlzZWNyZXRwYXNzd29yZA==
+---
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pv-claim
+  labels:
+    app: minio
+  namespace: twitter-website
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+
+
+---
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: minio
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: minio-pv-claim
+      containers:
+      - name: minio
+        image: minio/minio:latest
+        command:
+           - /bin/bash
+           - -c
+        args:  
+        - minio server /data --console-address :9001
+        env:
+        - name: MINIO_ROOT_USER #minio-user
+          valueFrom:
+              secretKeyRef:
+                name: minio-secret                         
+                key: minio-username 
+        - name: MINIO_ROOT_PASSWORD #minio-password
+          valueFrom:
+              secretKeyRef:
+                name: minio-secret
+                key: minio-password 
+        - name: MINIO_DEFAULT_BUCKETS
+          value: "twitterclonestorage"
+        ports:
+        - containerPort: 9000
+        - containerPort: 9001
+        volumeMounts:
+        - name: storage 
+          mountPath: "/data"
+        readinessProbe:
+          httpGet:
+            path: /minio/health/ready
+            port: 9000
+          initialDelaySeconds: 120
+          periodSeconds: 20
+        # Liveness probe detects situations where MinIO server instance
+        # is not working properly and needs restart. Kubernetes automatically
+        # restarts the pods if liveness checks fail.
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: 9000
+          initialDelaySeconds: 120
+          periodSeconds: 20
+
+
+
+
+
+
+
+
+
+
+      #- name: createbuckets
+      #  image: minio/mc
+      #  command: ["sh", "-c"]
+      #  args:
+      #      - |
+      #        /usr/bin/mc alias set twitterminio http://minio:9000 minio-user minio-password;
+      #        /usr/bin/mc mb twitterminio/twitterclonestorage;
+      #        /usr/bin/mc anonymous set public twitterminio/twitterclonestorage;
+      #        exit 0;
+              
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: twitter-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      terminationGracePeriodSeconds: 10
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+      - name: rabbitmq-k8s
+        image: rabbitmq:3.9.11-management-alpine
+        ports:
+          - name: http
+            protocol: TCP
+            containerPort: 15672
+          - name: amqp
+            protocol: TCP
+            containerPort: 5672
+        livenessProbe:
+          exec:
+            command: ["rabbitmq-diagnostics", "status"]
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          timeoutSeconds: 15
+        readinessProbe:
+          exec:
+            command: ["rabbitmq-diagnostics", "ping"]
+          initialDelaySeconds: 20
+          periodSeconds: 60
+          timeoutSeconds: 10
+        imagePullPolicy: Always
+
+---
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+    type: LoadBalancer
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: NodePort
+  ports:
+   - name: http
+     protocol: TCP
+     port: 15672
+     targetPort: 15672
+     nodePort: 31672
+   - name: amqp
+     protocol: TCP
+     port: 5672
+     targetPort: 5672
+     nodePort: 30672
+  selector:
+    app: rabbitmq
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: topic-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: topic-service
+  template:
+    metadata:
+      labels:
+        app: topic-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: topic-service
+        image: neoop1/twitter-topic-service:latest
+        ports:
+        - containerPort: 8003
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8003
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8003
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: topic-service
+  name: topic-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8003
+      targetPort: 8003
+  selector:
+    app: topic-service
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      hostname: zookeeper
+      containers:
+      - name: zookeeper
+        image: confluentinc/cp-zookeeper:7.0.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 2181
+        env:
+        - name: ZOOKEEPER_CLIENT_PORT
+          value: '2181'
+        - name: ZOOKEEPER_TICK_TIME
+          value: "2000"
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: zookeeper
+  name: zookeeper
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  ports:
+    - protocol: "TCP"
+      port: 2181
+      targetPort: 2181
+  selector:
+    app: zookeeper
+
+---
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: twitter-website
+
+---
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: twitter-website
+  name: ingressresource
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/cors-allow-headers: Content-Type, authorization
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS, DELETE"
+    nginx.ingress.kubernetes.io/cors-allow-origin: http://twitter.local
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+spec:
+  rules:
+  - host: twitter.local
+    http:
+      paths:
+        - path: "/"
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend
+              port:
+                number: 80
+                
+        - path: "/ui/v1"
+          pathType: Prefix
+          backend:
+            service:
+              name: api-gateway
+              port:
+                number: 8000
+
+
+        - path: "/websocket"
+          pathType: Prefix
+          backend:
+            service:
+              name: api-gateway
+              port:
+                number: 8000
+
+
+                
+
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    run: frontend
+  namespace: twitter-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 'neoop1/twitter-frontend:v0.8'
+          imagePullPolicy: Always
+          #resources:
+          #  requests:
+          #    cpu: 500m
+          #    memory: 256Mi
+          #  limits:
+          #    cpu: 700m
+          #    memory: 512Mi
+          ports:
+            - name: frontend
+              containerPort: 80
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: frontend
+  name: frontend
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 80
+      targetPort: 80
+  selector:
+    app: frontend
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tag-service
+  name: tag-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8004
+      targetPort: 8004
+  selector:
+    app: tag-service
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tag-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: tag-service
+  template:
+    metadata:
+      labels:
+        app: tag-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: tag-service
+        image: neoop1/twitter-tag-service:latest
+        ports:
+        - containerPort: 8004
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: DATASOURCE_HOST
+          value: "postgres"
+        - name: ZIPKIN_HOST
+          value: "zipkin"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8004
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8004
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+        resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: email-service
+  name: email-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8020
+      targetPort: 8020
+  selector:
+    app: email-service
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: email-service
+  template:
+    metadata:
+      labels:
+        app: email-service
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: email-service
+        image: neoop1/twitter-email-service:latest
+        ports:
+        - containerPort: 8020
+        env:
+        - name: EUREKA_HOST
+          value: "eureka-server"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
+        - name: ZIPKIN_HOST
+          value: "zipkin"          
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8020
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8020
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: chat-service
+  name: chat-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8006
+      targetPort: 8006
+  selector:
+    app: chat-service
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: chat-service
+          image: neoop1/twitter-chat-service:latest
+          ports:
+          - containerPort: 8006
+          env:
+          - name: EUREKA_HOST
+            value: "eureka-server"
+          - name: CONFIG_SERVER_HOST
+            value: "config-server"
+          - name: DATASOURCE_HOST
+            value: "postgres"
+          - name: ZIPKIN_HOST
+            value: "zipkin"
+          - name: rabbitmq
+          readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8006
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+          livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8006
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: broker
+  name: broker
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 9092
+      targetPort: 9092
+  selector:
+    app: broker
+
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broker
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: broker
+  template:
+    metadata:
+      labels:
+        app: broker
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: broker
+          image: confluentinc/cp-kafka:7.0.1
+          ports:
+          - containerPort: 9092
+          #readinessProbe:
+          #  exec:
+          #    command: ["/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1"]
+          #livenessProbe:
+          #  exec:
+          #    command: ["/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1"]
+          env:
+          - name: KAFKA_BROKER_ID
+            value: "1"
+          - name: KAFKA_ZOOKEEPER_CONNECT
+            value: "zookeeper:2181"
+          - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+            value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT"
+          - name: KAFKA_ADVERTISED_LISTENERS
+            value: "PLAINTEXT://broker:9092"
+          - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+            value: "1"
+          - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+            value: "1"
+          - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+            value: "1"
+          resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zipkin
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: NodePort
+  ports:
+  - port: 9411
+    targetPort: 9411
+    nodePort: 32000
+  selector:
+    app: zipkin
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zipkin
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: zipkin
+  template:
+    metadata:
+      labels:
+        app: zipkin
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: zipkin
+        image: openzipkin/zipkin
+        ports:
+        - containerPort: 9411
+        resources:
+          requests:
+            cpu: 200m
+            memory: 180Mi
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        livenessProbe:
+            initialDelaySeconds:  30
+            tcpSocket:
+              port: 9411
+        readinessProbe:
+            initialDelaySeconds: 30
+            httpGet:
+              path: /health
+              port: 9411
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: api-gateway
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+        image: neoop1/twitter-api-gateway:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: EUREKA_HOST
+          value: eureka-server
+        - name: CONFIG_SERVER_HOST
+          value: config-server
+        - name: ZIPKIN_HOST
+          value: zipkin
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: twitter-website
+  annotations:
+        prometheus.io/scrape: 'true'
+spec:
+  type: ClusterIP
+  selector:
+    app: api-gateway
+  ports:
+  - protocol: "TCP"
+    port: 8000
+    targetPort: 8000
+  selector:
+    app: api-gateway
+
