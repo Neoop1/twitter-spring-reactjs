@@ -1,6 +1,7 @@
 import { GIPHY_API_KEY } from "./common-constants";
 
-export const CLIENT_URL = "http://localhost:3000";
+//export const CLIENT_URL = "http://localhost:3000";
+export const CLIENT_URL = "http://twitter.local";
 export const DEFAULT_PROFILE_IMG = "https://abs.twimg.com/sticky/default_profile_images/default_profile_reasonably_small.png";
 
 export const FIND_USER_LOCATION = "https://ipapi.co/json/";
