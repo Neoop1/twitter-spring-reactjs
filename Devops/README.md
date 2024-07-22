@@ -163,8 +163,8 @@ docker service logs -f twitter_frontend
 # Host
 127.0.0.1 Twitter.local
 
-
-
+#Run Site Without web security
+chromium --disable-web-security --user-data-dir=./ChromeDevSession
 
 
 
