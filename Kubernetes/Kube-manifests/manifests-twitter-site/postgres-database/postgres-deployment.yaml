@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    run: postgres
+  namespace: twitter-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:       
+      containers:
+        - name: postgres-server
+          image: postgres
+          args:
+             - -c
+             - max_connections=1000
+             - -c
+             - shared_buffers=1024MB
+          env:
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: postgres-username  
+
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: postgres-password
+
+          - name: PGDATA
+            value: "/data/postgres"
+
+          - name: POSTGRES_DB
+            value: user
+
+          - name:  POSTGRES_MULTIPLE_DATABASES
+            value: "tweet,chat,lists,notification,tag,topic"
+          readinessProbe:
+            exec:
+              command: ["psql", "-w", "-U", "postgres", "-d", "postgres", "-c", "SELECT 1"]
+            initialDelaySeconds: 75
+            timeoutSeconds: 2
+          livenessProbe:
+            exec:
+              command: ["psql", "-w", "-U", "postgres", "-d", "postgres", "-c", "SELECT 1"]
+            initialDelaySeconds: 100
+            timeoutSeconds: 2
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: postgres-stateful-data
+              mountPath: /data/postgres
+            - name: db-script
+              subPath: ./dbas/
+              mountPath: /docker-entrypoint-initdb.d
+      initContainers:
+          # DataBase Build script
+        - name: git-sync
+          image: registry.k8s.io/git-sync/git-sync:v4.2.3
+          imagePullPolicy: Always
+          args:
+            - '--repo=https://github.com/Neoop1/Test.git'
+            - '--branch=DBScript'
+            - '--depth=1'
+            - '--link=dbas'
+            - '--root=/git'
+            - '--one-time=true'
+          volumeMounts:
+            - name: db-script
+              mountPath: /git
+      
+      volumes:
+        - name: postgres-stateful-data
+          persistentVolumeClaim:
+            claimName: postgres-volume-claim
+        - name: db-script
+          emptyDir: {}

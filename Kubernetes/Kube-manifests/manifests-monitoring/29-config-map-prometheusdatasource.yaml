@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: prometheus-datasource
+  namespace: monitoring
+data:
+  prometheus.yaml: |
+    {
+        "apiVersion": 1,
+        "datasources": [
+            {
+               "access":"proxy",
+                "editable": true,
+                "name": "Prometheus",
+                "isDefault: true",
+                "orgId": 1,
+                "uid": "PBFA97CFB590B2093",
+                "type": "prometheus",
+                "url": "http://prometheus.monitoring.svc:9090",
+                "version": 1
+            }
+        ]
+    }
+
+

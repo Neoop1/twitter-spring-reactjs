@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: twitter-website
+  name: ingressresource
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/cors-allow-headers: Content-Type, authorization
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS, DELETE"
+    nginx.ingress.kubernetes.io/cors-allow-origin: http://twitter.local
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+spec:
+  rules:
+  - host: twitter.local
+    http:
+      paths:
+        - path: "/"
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend
+              port:
+                number: 80
+                
+        - path: "/ui/v1"
+          pathType: Prefix
+          backend:
+            service:
+              name: api-gateway
+              port:
+                number: 8000
+
+
+        - path: "/websocket"
+          pathType: Prefix
+          backend:
+            service:
+              name: api-gateway
+              port:
+                number: 8000
+
+
+                
+

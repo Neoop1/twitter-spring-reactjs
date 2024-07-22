@@ -1,0 +1,82 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: minio
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: minio-pv-claim
+      containers:
+      - name: minio
+        image: minio/minio:latest
+        command:
+           - /bin/bash
+           - -c
+        args:  
+        - minio server /data --console-address :9001
+        env:
+        - name: MINIO_ROOT_USER #minio-user
+          valueFrom:
+              secretKeyRef:
+                name: minio-secret                         
+                key: minio-username 
+        - name: MINIO_ROOT_PASSWORD #minio-password
+          valueFrom:
+              secretKeyRef:
+                name: minio-secret
+                key: minio-password 
+        - name: MINIO_DEFAULT_BUCKETS
+          value: "twitterclonestorage"
+        ports:
+        - containerPort: 9000
+        - containerPort: 9001
+        volumeMounts:
+        - name: storage 
+          mountPath: "/data"
+        readinessProbe:
+          httpGet:
+            path: /minio/health/ready
+            port: 9000
+          initialDelaySeconds: 120
+          periodSeconds: 20
+        # Liveness probe detects situations where MinIO server instance
+        # is not working properly and needs restart. Kubernetes automatically
+        # restarts the pods if liveness checks fail.
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: 9000
+          initialDelaySeconds: 120
+          periodSeconds: 20
+
+
+
+
+
+
+
+
+
+
+      #- name: createbuckets
+      #  image: minio/mc
+      #  command: ["sh", "-c"]
+      #  args:
+      #      - |
+      #        /usr/bin/mc alias set twitterminio http://minio:9000 minio-user minio-password;
+      #        /usr/bin/mc mb twitterminio/twitterclonestorage;
+      #        /usr/bin/mc anonymous set public twitterminio/twitterclonestorage;
+      #        exit 0;
+              

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: email-service
+  name: email-service
+  annotations:
+        prometheus.io/scrape: 'true'
+  namespace: twitter-website
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: "TCP"
+      port: 8020
+      targetPort: 8020
+  selector:
+    app: email-service

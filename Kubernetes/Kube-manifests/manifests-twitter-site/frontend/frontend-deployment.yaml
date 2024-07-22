@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    run: frontend
+  namespace: twitter-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 'neoop1/twitter-frontend:v0.8'
+          imagePullPolicy: Always
+          #resources:
+          #  requests:
+          #    cpu: 500m
+          #    memory: 256Mi
+          #  limits:
+          #    cpu: 700m
+          #    memory: 512Mi
+          ports:
+            - name: frontend
+              containerPort: 80

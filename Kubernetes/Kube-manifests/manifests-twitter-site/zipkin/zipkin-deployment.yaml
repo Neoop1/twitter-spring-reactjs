@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zipkin
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: zipkin
+  template:
+    metadata:
+      labels:
+        app: zipkin
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: zipkin
+        image: openzipkin/zipkin
+        ports:
+        - containerPort: 9411
+        resources:
+          requests:
+            cpu: 200m
+            memory: 180Mi
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        livenessProbe:
+            initialDelaySeconds:  30
+            tcpSocket:
+              port: 9411
+        readinessProbe:
+            initialDelaySeconds: 30
+            httpGet:
+              path: /health
+              port: 9411
