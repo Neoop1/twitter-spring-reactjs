@@ -163,11 +163,20 @@ docker service logs -f twitter_frontend
 # Host
 127.0.0.1 Twitter.local
 
-#Run Site Without web security
+# Run Site Without web security (Chrome browser without CORS)
+# Linux
 chromium --disable-web-security --user-data-dir=./ChromeDevSession
-
+# Windows 
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --user-data-dir="C:\tmpChromeSession"
 
 
 # kubernetes/ingress logs
 
 kubectl describe ing
+
+
+
+
+Errors 
+
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://twitter.local/ui/v1/user/token. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 504.
