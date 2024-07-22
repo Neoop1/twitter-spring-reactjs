@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 
 @Configuration
 public class ImageConfiguration {
@@ -18,13 +19,20 @@ public class ImageConfiguration {
 
     @Value("${amazon.aws.secret-key}")
     private String awsAccessSecret;
+    
+    @Value("${amazon.aws.endpoint}")
+    private String awsEndPoint;
 
     @Bean
     public AmazonS3 s3Client() {
         AWSCredentials credentials = new BasicAWSCredentials(awsAccessKey, awsAccessSecret);
         return AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .withRegion(Regions.EU_CENTRAL_1)
+                .withEndpointConfiguration(new EndpointConfiguration( awsEndPoint , "us-east-1"))
+                .withPathStyleAccessEnabled(true) // Test 
+                //.withRegion(Regions.EU_CENTRAL_1)
                 .build();
     }
 }
+
+

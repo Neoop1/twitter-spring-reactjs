@@ -13,7 +13,7 @@ services:
             PGDATA: /data/postgres
         volumes:
             - postgres_prod:/data/postgres
-            - ./postgres:/docker-entrypoint-initdb.d #DataBase script 
+            - ./postgres:/docker-entrypoint-initdb.d #POSTGRES_MULTIPLE_DATABASE script 
         ports:
             - "5432:5432"
         networks:
