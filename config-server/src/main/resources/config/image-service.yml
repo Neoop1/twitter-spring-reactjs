@@ -18,7 +18,7 @@ amazon:
     aws:
         access-key: "minio-user"
         secret-key: "minio-password"
-        endpoint: http://minio:9000 ##minio server 
+        endpoint: http://minio-service.twitter-website.svc.cluster.local:9000 ##minio server 
 
     
 
