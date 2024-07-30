@@ -212,7 +212,7 @@ services:
         restart: unless-stopped
 
     config-server:
-        image: neoop1/twitter-config-server:v0.8
+        image: neoop1/twitter-config-server:v0.10
         build:
           context: ./config-server
           dockerfile: Dockerfile
