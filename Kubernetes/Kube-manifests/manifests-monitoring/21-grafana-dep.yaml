@@ -18,10 +18,10 @@ spec:
         app: grafana
     spec:
       securityContext:
-        fsGroup: 472
-        runAsGroup: 472
+        fsGroup: 1001
+        runAsGroup: 1001
         runAsNonRoot: true
-        runAsUser: 472
+        runAsUser: 1001
       containers:
       - name: grafana
         image: grafana/grafana:latest
@@ -53,7 +53,7 @@ spec:
  
         volumeMounts:
 
-          - name: grafana-pv
+          - name: grafana-volume
             mountPath: /var/lib/grafana
 
           - name: grafana-datasources
@@ -76,9 +76,9 @@ spec:
       terminationGracePeriodSeconds: 60
 
       volumes:
-        - name: grafana-pv
+        - name: grafana-volume
           persistentVolumeClaim:
-            claimName: grafana-pvc
+            claimName: grafana-volume-claim
 
         - name: grafana-datasources
           configMap:
@@ -96,15 +96,3 @@ spec:
           configMap:
             name: micrometer-spring-dashboard
 
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grafana-pvc
-  namespace: monitoring
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
