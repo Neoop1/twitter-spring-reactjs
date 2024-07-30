@@ -22,22 +22,28 @@ spec:
       containers:
       - name: minio
         image: minio/minio:latest
+        args:
+            - server
+            - /data/minio/
+            - --address
+            - :9000
+            - --console-address
+            - :9001
         command:
-           - /bin/bash
-           - -c
-        args:  
-        - minio server /data --console-address :9001
+            - minio
         env:
-        - name: MINIO_ROOT_USER #minio-user
-          valueFrom:
-              secretKeyRef:
-                name: minio-secret                         
-                key: minio-username 
-        - name: MINIO_ROOT_PASSWORD #minio-password
-          valueFrom:
-              secretKeyRef:
-                name: minio-secret
-                key: minio-password 
+        - name: MINIO_ROOT_USER
+          value: "minio-user"
+          #valueFrom:
+          #    secretKeyRef:
+          #      name: minio-secret                         
+          #      key: minio-username 
+        - name: MINIO_ROOT_PASSWORD 
+          value: "minio-password"
+          #valueFrom:
+          #    secretKeyRef:
+          #      name: minio-secret
+          #      key: minio-password 
         - name: MINIO_DEFAULT_BUCKETS
           value: "twitterclonestorage"
         ports:

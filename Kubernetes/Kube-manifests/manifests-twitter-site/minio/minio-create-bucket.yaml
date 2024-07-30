@@ -1,0 +1,42 @@
+---
+# Create twitterclonestorage bucket
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-create-bucket
+  namespace: twitter-website
+spec:
+  completions: 1
+  template:
+    metadata:
+      name: minio-create-bucket
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: minio-bucket
+        image: minio/mc
+        env:
+        - name: MINIO_URL
+          value: "http://minio-service.twitter-website.svc.cluster.local:9000"
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: minio-username
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: minio-password
+        - name: MINIO_BUCKET
+          value: "twitterclonestorage"
+        command:
+           - /bin/bash
+           - -c
+        args:
+            #- /usr/bin/mc alias set twitterminio $MINIO_URL $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD;
+            - /usr/bin/mc alias set twitterminio $MINIO_URL minio-user minio-password;
+            - /usr/bin/mc mb twitterminio/$MINIO_BUCKET;
+            - /usr/bin/mc anonymous set public twitterminio/$MINIO_BUCKET;
+
+
