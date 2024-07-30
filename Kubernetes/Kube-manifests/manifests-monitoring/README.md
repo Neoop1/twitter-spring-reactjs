@@ -2,7 +2,7 @@
 
 First create the monitoring namespace using the `00-monitoring-ns.yaml` file:
 
-`$ kubectl create -f 00-monitoring-ns.yaml`
+`kubectl create -f 00-monitoring-ns.yaml`
 
 ### kube-state
 
