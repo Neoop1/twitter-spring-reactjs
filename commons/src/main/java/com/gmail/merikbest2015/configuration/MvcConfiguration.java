@@ -14,7 +14,8 @@ import static com.gmail.merikbest2015.constants.PathConstants.UI_V1;
 @Configuration
 public class MvcConfiguration implements WebMvcConfigurer {
 
-    @Value("${hostname:http://localhost:3000}")
+    //@Value("${hostname:http://localhost:3000}")
+    @Value("${hostname:twitter.local")
     private String hostname;
 
     @Bean
