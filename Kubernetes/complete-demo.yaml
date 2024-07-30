@@ -18,7 +18,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: config-server
-        image: neoop1/twitter-config-server:v0.8
+        image: neoop1/twitter-config-server:v0.10
         ports:
         - containerPort: 8888
         readinessProbe:
@@ -1668,58 +1668,6 @@ spec:
   selector:
     app: api-gateway
 
----
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: config-server
-  namespace: twitter-website
-spec:
-  selector:
-    matchLabels:
-      app: config-server
-  template:
-    metadata:
-      labels:
-        app: config-server
-    spec:
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
-      containers:
-      - name: config-server
-        image: neoop1/twitter-config-server:v0.8
-        ports:
-        - containerPort: 8888
-        readinessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8888
-            initialDelaySeconds: 120
-            periodSeconds: 15
-            failureThreshold: 5
-            timeoutSeconds: 5
-        livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8888
-            initialDelaySeconds: 40
-            periodSeconds: 15
-            failureThreshold: 5
-            timeoutSeconds: 5
-        env:
-        - name: EUREKA_HOST
-          value: "eureka-server"
-        - name: ZIPKIN_HOST
-          value: "zipkin"
-        resources:
-          requests:
-            cpu: 300m
-            memory: 256Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
----
 ---
 apiVersion: v1
 kind: Service
