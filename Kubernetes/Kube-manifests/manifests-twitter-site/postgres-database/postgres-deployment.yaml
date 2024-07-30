@@ -19,6 +19,7 @@ spec:
       containers:
         - name: postgres-server
           image: postgres
+          imagePullPolicy: IfNotPresent
           args:
              - -c
              - max_connections=1000
@@ -38,7 +39,7 @@ spec:
                 key: postgres-password
 
           - name: PGDATA
-            value: "/data/postgres"
+            value: "/var/lib/postgresql/data/pgdata"
 
           - name: POSTGRES_DB
             value: user
@@ -60,29 +61,50 @@ spec:
               containerPort: 5432
           volumeMounts:
             - name: postgres-stateful-data
-              mountPath: /data/postgres
-            - name: db-script
-              subPath: ./dbas/
-              mountPath: /docker-entrypoint-initdb.d
-      initContainers:
-          # DataBase Build script
-        - name: git-sync
-          image: registry.k8s.io/git-sync/git-sync:v4.2.3
-          imagePullPolicy: Always
-          args:
-            - '--repo=https://github.com/Neoop1/Test.git'
-            - '--branch=DBScript'
-            - '--depth=1'
-            - '--link=dbas'
-            - '--root=/git'
-            - '--one-time=true'
-          volumeMounts:
-            - name: db-script
-              mountPath: /git
-      
+              mountPath: /var/lib/postgresql/data
+            #- name: db-script
+            #  subPath: ./dbas/
+            #  mountPath: /docker-entrypoint-initdb.d
+
+            - name: volume-from-config-map-script
+              mountPath: "/docker-entrypoint-initdb.d"
+              readOnly: true
+
       volumes:
         - name: postgres-stateful-data
           persistentVolumeClaim:
             claimName: postgres-volume-claim
-        - name: db-script
-          emptyDir: {}
+        #- name: db-script
+        #  emptyDir: {}
+        - name: volume-from-config-map-script
+          configMap:
+            name: create-multiple-postgresql-databases
+
+
+
+    
+      #initContainers:
+      #    # DataBase Build script
+      #  - name: git-sync
+      #    image: registry.k8s.io/git-sync/git-sync:v4.2.3
+      #    imagePullPolicy: Always
+      #    args:
+      #      - '--repo=https://github.com/Neoop1/Test.git'
+      #      - '--branch=DBScript'
+      #      - '--depth=1'
+      #      - '--link=dbas'
+      #      - '--root=/git'
+      #      - '--one-time=true'
+      #    volumeMounts:
+      #      - name: db-script
+      #        mountPath: /git
+
+
+      
+
+
+
+
+
+
+
