@@ -584,8 +584,8 @@ services:
           dockerfile: Dockerfile
         container_name: frontend
         hostname: frontend
-        #ports:
-        #  - "80:80"
+        ports:
+          - "3000:80"
         networks:
             - spring
         depends_on:
@@ -603,7 +603,7 @@ services:
 
             - "traefik.http.routers.frontend.entrypoints=web"
             - "traefik.http.services.frontend.loadbalancer.server.port=80"
-            #- "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
+            - "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
 
 
 
