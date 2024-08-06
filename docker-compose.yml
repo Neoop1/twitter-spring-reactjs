@@ -677,7 +677,7 @@ services:
            timeout: 5s
            retries: 5
            start_period: 40s
-        labels:
+        #labels:
           #  - "traefik.enable=true"
           #  - "traefik.docker.network=spring"
           #  - "traefik.port=8000"
