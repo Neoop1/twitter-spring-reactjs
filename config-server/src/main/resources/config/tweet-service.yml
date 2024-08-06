@@ -23,6 +23,9 @@ spring:
         bootstrap-servers: ${BROKER_HOST:localhost}:9092
         consumer:
             group-id: tweet
+    jackson: # No serializer found for class java.io.FileDescriptor and no properties discovered to create BeanSerializer | to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS
+        serialization:
+            FAIL_ON_EMPTY_BEANS: false
 resilience4j:
     circuitbreaker:
         instances:
