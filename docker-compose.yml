@@ -224,6 +224,9 @@ services:
         hostname: api-gateway
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         ports:
