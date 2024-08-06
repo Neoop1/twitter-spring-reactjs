@@ -164,10 +164,11 @@ services:
     eureka-server:
         build:
           context: eureka-server
+          args:
+            ZIPKIN_HOST: zipkin
         container_name: eureka-server
         hostname: eureka-server
-        args:
-            ZIPKIN_HOST: zipkin
+  
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
