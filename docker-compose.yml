@@ -626,7 +626,7 @@ services:
         command:
           - --api.dashboard=true # (Optional) Enable Dashboard, don't do in production
           - --api.insecure=true  # (Optional) Enable Dashboard, don't do in production
-         # - --providers.docker  # (Optional) Enable this, if you want to expose all containers automatically
+          - --providers.docker  # (Optional) Enable this, if you want to expose all containers automatically
 
           - "--entrypoints.web.address=:80"
 
