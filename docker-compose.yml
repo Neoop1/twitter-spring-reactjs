@@ -574,8 +574,8 @@ services:
             - spring
         ports:
           - "8181:80"
-        depends_on:
-            - frontend
+        #depends_on:
+        #    - frontend
 
     frontend:   
         image: neoop1/twitter-frontend:v0.10

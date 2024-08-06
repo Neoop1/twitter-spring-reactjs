@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: chat-service
+          image: neoop1/twitter-chat-service:latest
+          ports:
+          - containerPort: 8006
+          env:
+          - name: EUREKA_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: EUREKA_HOST
+          - name: EUREKA_DEFAULT_ZONE
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: EUREKA_DEFAULT_ZONE
+          - name: REGISTER_WITH_EUREKA
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: REGISTER_WITH_EUREKA
+          - name: FETCH_REGISTRY
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: FETCH_REGISTRY
+          - name: BROKER_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: BROKER_HOST                  
+          - name: CONFIG_SERVER_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: CONFIG_SERVER_HOST
+          - name: ZIPKIN_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: ZIPKIN_HOST
+          - name: DATASOURCE_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: DATASOURCE_HOST 
+          - name: RABBITMQ_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: RABBITMQ_HOST      
+          readinessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8006
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+          livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8006
+              initialDelaySeconds: 120
+              periodSeconds: 15
+              failureThreshold: 5
+              timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 300m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

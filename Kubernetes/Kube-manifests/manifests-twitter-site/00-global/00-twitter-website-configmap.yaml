@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: global-config
+  namespace: twitter-website
+data:
+    EUREKA_HOST: eureka-server
+    EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+    REGISTER_WITH_EUREKA: true
+    FETCH_REGISTRY: true
+    BROKER_HOST: broker
+    CONFIG_SERVER_HOST: config-server
+    DATASOURCE_HOST: postgres
+    ZIPKIN_HOST: zipkin
+    RABBITMQ_HOST: rabbitmq
+ 
+
+
+
+
+              

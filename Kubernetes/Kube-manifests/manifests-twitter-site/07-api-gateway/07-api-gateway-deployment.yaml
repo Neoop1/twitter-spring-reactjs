@@ -1,0 +1,92 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: api-gateway
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+        image: neoop1/twitter-api-gateway:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: EUREKA_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: EUREKA_HOST
+        - name: EUREKA_DEFAULT_ZONE
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: EUREKA_DEFAULT_ZONE
+        - name: REGISTER_WITH_EUREKA
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: REGISTER_WITH_EUREKA
+        - name: FETCH_REGISTRY
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: FETCH_REGISTRY
+        - name: BROKER_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: BROKER_HOST                  
+        - name: CONFIG_SERVER_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: CONFIG_SERVER_HOST
+        - name: ZIPKIN_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: ZIPKIN_HOST 
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi

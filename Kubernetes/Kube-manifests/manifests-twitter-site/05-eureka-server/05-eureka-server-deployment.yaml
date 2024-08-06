@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-server
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: eureka-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: eureka-server
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      restartPolicy: Always
+      containers:
+      - name: eureka-server
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+        image: neoop1/twitter-eureka-server
+        ports:
+        - containerPort: 8761
+        env:
+          - name: EUREKA_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: EUREKA_HOST
+          - name: EUREKA_DEFAULT_ZONE
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: EUREKA_DEFAULT_ZONE
+          - name: REGISTER_WITH_EUREKA
+            value: false
+          - name: FETCH_REGISTRY
+            value: false                
+          - name: ZIPKIN_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: ZIPKIN_HOST   
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5

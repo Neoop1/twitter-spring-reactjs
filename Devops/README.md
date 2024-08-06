@@ -268,3 +268,4 @@ curl -i 'http://192.168.7.93:50440/api/v1/login'   -H 'Connection: keep-alive'  
 
 
 ssh -L 8080:192.168.7.105:8080 vmuser@192.168.7.105
+ssh -t vmuser@192.168.7.105 "cd twitter-spring-reactjs; exec \$SHELL -l"

@@ -1,0 +1,77 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-server
+  namespace: twitter-website
+spec:
+  selector:
+    matchLabels:
+      app: config-server
+  template:
+    metadata:
+      labels:
+        app: config-server
+    spec:
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: config-server
+        image: neoop1/twitter-config-server:v0.12
+        #imagePullPolicy: Always
+        ports:
+        - containerPort: 8888
+        env:
+          - name: EUREKA_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: EUREKA_HOST
+          - name: EUREKA_DEFAULT_ZONE
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: EUREKA_DEFAULT_ZONE
+          - name: REGISTER_WITH_EUREKA
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: REGISTER_WITH_EUREKA
+          - name: FETCH_REGISTRY
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: FETCH_REGISTRY                 
+          - name: CONFIG_SERVER_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: CONFIG_SERVER_HOST
+          - name: ZIPKIN_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: ZIPKIN_HOST
+        readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            failureThreshold: 5
+            timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi

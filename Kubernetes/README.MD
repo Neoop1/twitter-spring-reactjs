@@ -1,13 +1,16 @@
 ### Create one File manifests
 
-find ./Kube-manifests/manifests-twitter-site/ -type f -exec printf '---\n' {} \; -exec cat {} \; -exec printf '\n' \; >> ./complete-demo.yaml 2>/dev/null
+
+find ./Kube-manifests/manifests-twitter-site/ -type f -printf '%h\0%d\0%p\n' | sort -t '\0' -n | awk -F '\0' '{print $3}' | while read file; do
+    xargs -I{} -t find {} -exec printf '---\n' {} \; -exec cat {} \; -exec printf '\n' \; >> ./complete-demo_$(date +%Y-%m-%d_%H:%M).yaml 2>/dev/null
+done
 
 
 
 ### Kube Steps 
 kubectl create ns twitter-website
 
-kubectl apply -f ./complete-demo.yaml
+kubectl apply -f ./complete-demo*.yaml # Delete old Files
 
 
 
@@ -27,3 +30,22 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 
 deltet all Terminating pods
 for p in $(kubectl get pods | grep Terminating | awk '{print $1}'); do kubectl delete pod $p --grace-period=0 --force;done
+
+
+
+
+
+
+
+
+-Temp
+###
+find ./Kube-manifests/manifests-twitter-site/ -type f -exec printf '---\n' {} \; -exec cat {} \; -exec printf '\n' \; >> ./complete-demo.yaml 2>/dev/null
+####
+
+
+####
+find ./Kube-manifests/manifests-twitter-site/ -type f -printf '%h\0%d\0%p\n' | sort -t '\0' -n | awk -F '\0' '{print $3}' | while read file; do
+    xargs cat >> ./complete-demo.yaml 2>/dev/null
+done
+####

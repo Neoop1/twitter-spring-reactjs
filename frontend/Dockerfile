@@ -4,7 +4,6 @@ COPY package*.json ./
 RUN apk --no-cache add --virtual .builds-deps build-base python3
 RUN npm config set legacy-peer-deps true
 # slow internet connection
-RUN npm config set timeout 240000
 RUN npm config set fetch-retry-mintimeout 20000 
 RUN npm config set fetch-retry-maxtimeout 120000 
 #######
