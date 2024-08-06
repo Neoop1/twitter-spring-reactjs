@@ -216,7 +216,8 @@ services:
 
     api-gateway:
         build:
-          context: api-gateway
+          context: ./api-gateway
+          dockerfile: Dockerfile
         container_name: api-gateway
         hostname: api-gateway
         environment:
