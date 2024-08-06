@@ -243,6 +243,12 @@ services:
            timeout: 5s
            retries: 5
            start_period: 40s
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.backend.rule=Host(`twitter.local`) && PathPrefix(`/ui/v1`)"
+            - "traefik.http.routers.backend.rule=PathPrefixStrip:/websocket;AddPrefix:/ui/v1;"
+            - "traefik.http.services.backend.loadbalancer.server.port=8000"
+            - "traefik.docker.network=spring"
         restart: unless-stopped
 
     user-service:
@@ -594,10 +600,8 @@ services:
           dockerfile: Dockerfile
         container_name: frontend
         hostname: frontend
-        environment:
-           PUBLIC_SERVER_URL: twitter.local:3000
-        #ports:
-        #  - "3000:3000"
+        ports:
+        #  - "80:80"
         networks:
             - spring
         depends_on:
@@ -608,7 +612,32 @@ services:
             - eureka-server
             - config-server
             - websocket-service
-    
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.backend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
+            - "traefik.http.services.frontend.loadbalancer.server.port=80"
+            - "traefik.docker.network=spring"
+            
+    traefik:
+        image: docker.io/library/traefik:v3.1.1
+        container_name: traefik
+        ports:
+          - 8081:80
+        #  - 443:443
+        # -- (Optional) Enable Dashboard, don't do in production
+          - 8088:8080
+        volumes:
+          - /run/docker.sock:/run/docker.sock:ro
+          - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+          - ./traefik/conf/:/etc/traefik/conf/
+          - ./traefik/certs/:/etc/traefik/certs/
+        # environment:
+        #   - CF_DNS_API_TOKEN=cf-dns-api-token
+        networks:
+           - spring
+        #   - monitoring
+        restart: unless-stopped
+
 networks:
     postgres:
         driver: bridge
