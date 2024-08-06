@@ -614,24 +614,48 @@ services:
             - websocket-service
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.backend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
+            #- "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
             - "traefik.http.services.frontend.loadbalancer.server.port=80"
             - "traefik.docker.network=spring"
+
+
+
+
+            - traefik.http.routers.frontend.entrypoints=frontend
+            - traefik.http.routers.frontend.rule=Host(`twitter.local`)
+            - traefik.http.routers.frontend.service=frontend
+            - traefik.http.routers.frontend.tls=true
+      
+            - traefik.http.routers.frontend.entrypoints=frontend-secure
+            - traefik.http.routers.frontend.rule=Host(`twitter.local`)
+            - traefik.http.routers.frontend.tls=true
+
             
     traefik:
         image: docker.io/library/traefik:v3.1.1
         container_name: traefik
         ports:
           - 8081:80
-        #  - 443:443
-        # -- (Optional) Enable Dashboard, don't do in production
+        # - 443:443
+        # (Optional) Enable Dashboard, don't do in production
           - 8088:8080
+        command:
+          - --api.dashboard=true # (Optional) Enable Dashboard, don't do in production
+          - --api.insecure=true  # (Optional) Enable Dashboard, don't do in production
+          - --providers.docker
+          - --entrypoints.web.address=:8081
+          - --entrypoints.web.http.redirections.entrypoint.to=frontend-secure
+          - --entrypoints.web.http.redirections.entrypoint.scheme=https
+          - --entrypoints.web.http.redirections.entrypoint.permanent=true
+          - --entrypoints.frontend-secure.address=:443
+          - --entrypoints.frontend.address=:80
+
         volumes:
           - /run/docker.sock:/run/docker.sock:ro
-          - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
-          - ./traefik/conf/:/etc/traefik/conf/
-          - ./traefik/certs/:/etc/traefik/certs/
-        # environment:
+        #  - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+        #  - ./traefik/conf/:/etc/traefik/conf/
+        #  - ./traefik/certs/:/etc/traefik/certs/
+        #environment:
         #   - CF_DNS_API_TOKEN=cf-dns-api-token
         networks:
            - spring
