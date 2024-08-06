@@ -586,7 +586,6 @@ services:
           - "80:80"
         depends_on:
             - frontend
-            - api-gateway
 
     frontend:   
         image: neoop1/twitter-frontend:v0.8
