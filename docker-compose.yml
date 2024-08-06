@@ -619,7 +619,7 @@ services:
         image: docker.io/library/traefik:v3.1.1
         container_name: traefik
         ports:
-          - 8081:80
+          - 80:80
         # - 443:443
         # (Optional) Enable Dashboard, don't do in production
           - 8088:8080
