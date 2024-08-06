@@ -604,7 +604,7 @@ services:
 
             - "traefik.http.routers.frontend.entrypoints=web"
             - "traefik.http.routers.frontend.rule=Host(`twitter.local`)"
-            #- "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
+            - "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
 
 
 
