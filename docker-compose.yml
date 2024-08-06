@@ -598,16 +598,16 @@ services:
             - websocket-service
         labels:
             - "traefik.enable=true"
-            #- "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
             - "traefik.http.services.frontend.loadbalancer.server.port=80"
             - "traefik.docker.network=spring"
 
 
+            - "traefik.http.routers.frontend.entrypoints=web"
+            - "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
 
 
-            - traefik.http.routers.frontend.entrypoints=frontend
-            - traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
-            - traefik.http.routers.frontend.service=frontend
+
+
             #- traefik.http.routers.frontend.tls=true
       
             #- traefik.http.routers.frontend.entrypoints=frontend-secure
@@ -626,12 +626,12 @@ services:
         command:
           - --api.dashboard=true # (Optional) Enable Dashboard, don't do in production
           - --api.insecure=true  # (Optional) Enable Dashboard, don't do in production
-         # - --providers.docker
+         # - --providers.docker  # (Optional) Enable this, if you want to expose all containers automatically
 
-          - --entrypoints.frontend.address=:80
+          - "--entrypoints.web.address=:80"
 
-          - --entrypoints.backend.address=:8000
-          #- --entrypoints.web.http.redirections.entrypoint.to=frontend-secure
+          #- --entrypoints.backend.address=:8000
+          #- --entrypoints.web.http.redirections.entrypoint.to=frontend
           #- --entrypoints.web.http.redirections.entrypoint.scheme=https
           #- --entrypoints.web.http.redirections.entrypoint.permanent=true
           #- --entrypoints.frontend-secure.address=:443
@@ -677,16 +677,16 @@ services:
            timeout: 5s
            retries: 5
            start_period: 40s
-        #labels:
-          #  - "traefik.enable=true"
-          #  - "traefik.docker.network=spring"
-          #  - "traefik.port=8000"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=spring"
+            - "traefik.http.routers.backend.entrypoints=web"
           #  
           #  - traefik.http.routers.backend.entrypoints=backend
           #  - traefik.http.routers.backend.service=backend
 #
 #
-          #  - "traefik.frontend.rule=Host(`twitter.local`);PathPrefixStrip:/websocket && PathPrefix(`/ui/v1`)"
+          #  - "traefik.backend.rule=Host(`twitter.local`);PathPrefixStrip:/websocket && PathPrefix(`/ui/v1`)"
           ##  - "traefik.http.routers.backend.rule=PathPrefixStrip:/websocket;AddPrefix:/ui/v1;"
           ##  - "traefik.http.services.backend.loadbalancer.server.port=8000"
     
