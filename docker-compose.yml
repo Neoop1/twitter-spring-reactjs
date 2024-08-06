@@ -626,7 +626,7 @@ services:
         command:
           - --api.dashboard=true # (Optional) Enable Dashboard, don't do in production
           - --api.insecure=true  # (Optional) Enable Dashboard, don't do in production
-          - --providers.docker
+         # - --providers.docker
 
           - --entrypoints.frontend.address=:80
 
