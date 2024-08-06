@@ -4,16 +4,14 @@ COPY package*.json ./
 RUN apk --no-cache add --virtual .builds-deps build-base python3
 RUN npm config set legacy-peer-deps true
 # slow internet connection
+RUN npm config set timeout 240000
 RUN npm config set fetch-retry-mintimeout 20000 
 RUN npm config set fetch-retry-maxtimeout 120000 
-RUN npm config set fetch-retries  4
-RUN npm config set fetch-retry-factor 10
-RUN npm config set fetch-timeout 300000
 #######
 RUN npm install   && npm rebuild bcrypt --build-from-source && npm cache clean --force 
 #RUN npm install --production && npm rebuild bcrypt --build-from-source && npm cache clean --force 
 COPY . .
-
+RUN npm install --save-dev ajv@^7 
 RUN npm run build
 
 
