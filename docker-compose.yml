@@ -626,7 +626,7 @@ services:
           - --api.dashboard=true # (Optional) Enable Dashboard, don't do in production
           - --api.insecure=true  # (Optional) Enable Dashboard, don't do in production
           - --providers.docker  # (Optional) Enable this, if you want to expose all containers automatically
-
+          - "--providers.docker.exposedbydefault=false"
           - "--entrypoints.web.address=:80"
 
           #- --entrypoints.backend.address=:8000
@@ -679,9 +679,9 @@ services:
         labels:
             - "traefik.enable=true"
             - "traefik.docker.network=spring"
-            - "traefik.http.routers.backend.entrypoints=web"
-            - "traefik.backend.rule=Host(`twitter.local`);PathPrefix(`/websocket`)"
-            - "traefik.backend.rule=Host(`twitter.local`);PathPrefix(`/ui/v1`)"
+          #  - "traefik.http.routers.backend.entrypoints=web"
+            - "traefik.http.routers.frontend.rule=PathPrefix(`/websocket`)"
+            - "traefik.http.routers.frontend.rule=PathPrefix(`/ui/v1`)"
           #  
           #  - traefik.http.routers.backend.entrypoints=backend
           #  - traefik.http.routers.backend.service=backend
