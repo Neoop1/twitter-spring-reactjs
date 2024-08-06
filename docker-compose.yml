@@ -604,10 +604,6 @@ services:
             - "traefik.http.routers.frontend.entrypoints=web"
             - "traefik.http.services.frontend.loadbalancer.server.port=80"
             - "traefik.http.routers.frontend.rule=Host(`twitter.local`)"
-
-            # - "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
-      
-                  #- traefik.http.routers.frontend.tls=true
       
             #- traefik.http.routers.frontend.entrypoints=frontend-secure
             #- traefik.http.routers.frontend.rule=Host(`twitter.local`)
@@ -630,7 +626,7 @@ services:
           - "--entrypoints.web.address=:80"
 
           #- --entrypoints.backend.address=:8000
-          #- --entrypoints.web.http.redirections.entrypoint.to=frontend
+          #- --entrypoints.web.http.redirections.entrypoint.to=frontend-sec
           #- --entrypoints.web.http.redirections.entrypoint.scheme=https
           #- --entrypoints.web.http.redirections.entrypoint.permanent=true
           #- --entrypoints.frontend-secure.address=:443
@@ -679,35 +675,8 @@ services:
         labels:
             - "traefik.enable=true"
             - "traefik.docker.network=spring"
-          #  - "traefik.http.routers.backend.entrypoints=web"
-            - "traefik.http.routers.frontend.rule=PathPrefix(`/websocket`)"
-            - "traefik.http.routers.frontend.rule=PathPrefix(`/ui/v1`)"
-          #  
-          #  - traefik.http.routers.backend.entrypoints=backend
-          #  - traefik.http.routers.backend.service=backend
-#
-#
-          #  - "traefik.backend.rule=Host(`twitter.local`);PathPrefixStrip:/websocket && PathPrefix(`/ui/v1`)"
-
-          ##  - "traefik.http.routers.backend.rule=PathPrefixStrip:/websocket;AddPrefix:/ui/v1;"
-          ##  - "traefik.http.services.backend.loadbalancer.server.port=8000"
-    
-
-
-           # - "traefik.frontend.rule=Host:k8s-traefik.info;PathPrefixStrip:/pybackend"
-           # - "traefik.frontend.auth.forward.address=http://forward-auth:8000/auth"
-           # - "traefik.frontend.auth.forward.authResponseHeaders=Authorization"
-         #   - "traefik.backend=websocket"
-
-          #  - "traefik.http.routers.portainer-secure.rule=Host(`your-domain.com`) && PathPrefix(`/portainer`)"
-         
-          #  - "traefik.http.routers.portainer-secure.middlewares=portainer-redirectregex, portainer-replacepathregex"
-         
-          #  - "traefik.http.middlewares.portainer-replacepathregex.replacepathregex.regex=^/portainer/(.*)"
-          #  - "traefik.http.middlewares.portainer-replacepathregex.replacepathregex.replacement=/$$1"
-          #  - "traefik.http.middlewares.portainer-redirectregex.redirectregex.regex=^(.*)/portainer$$"
-          #  - "traefik.http.middlewares.portainer-redirectregex.redirectregex.replacement=$$1/portainer/"
-
+            - "traefik.http.routers.backend.entrypoints=web"
+            - "traefik.http.routers.backend.rule=Host(`twitter.local`) && PathPrefix(`/websocket`) || PathPrefix(`/ui/v1`)"
         restart: unless-stopped
 networks:
     postgres:
