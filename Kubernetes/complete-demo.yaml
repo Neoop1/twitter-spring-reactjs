@@ -18,7 +18,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: config-server
-        image: neoop1/twitter-config-server:v0.10
+        image: neoop1/twitter-config-server:v0.12
         ports:
         - containerPort: 8888
         readinessProbe:
@@ -848,7 +848,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio-service
+  name: minio
   namespace: twitter-website
   annotations:
         prometheus.io/scrape: 'true'
@@ -883,7 +883,7 @@ spec:
         image: minio/mc
         env:
         - name: MINIO_URL
-          value: "http://minio-service.twitter-website.svc.cluster.local:9000"
+          value: "http://minio.twitter-website.svc.cluster.local:9000"
         - name: MINIO_ROOT_USER
           valueFrom:
             secretKeyRef:

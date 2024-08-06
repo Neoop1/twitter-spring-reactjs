@@ -9,7 +9,7 @@ metadata:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/cors-allow-headers: Content-Type, authorization
     nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS, DELETE"
-    nginx.ingress.kubernetes.io/cors-allow-origin: http://twitter.local
+    nginx.ingress.kubernetes.io/cors-allow-origin: http://twitter.local/*
     nginx.ingress.kubernetes.io/enable-cors: 'true'
 spec:
   #tls:
@@ -17,11 +17,11 @@ spec:
   #  - twitter.local
   #  secretName: twitter-website-ingress-secret
   ingressClassName: nginx
-  defaultBackend:
-    service:
-      name: frontend
-      port:
-        number: 80
+  #defaultBackend:
+  #  service:
+  #    name: frontend
+  #    port:
+  #      number: 80
   rules:
   - host: twitter.local
     http:
@@ -47,3 +47,13 @@ spec:
               name: api-gateway
               port:
                 number: 8000
+
+        - path: /ui/v1/image/upload
+          pathType: Prefix
+          backend:
+            service:
+              name: api-gateway
+              port:
+                number: 8000
+                
+

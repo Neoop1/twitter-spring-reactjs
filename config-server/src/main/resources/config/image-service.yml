@@ -5,7 +5,7 @@ spring:
     application:
         name: image-service
     zipkin:
-        base-url: http://${ZIPKIN_HOST:zipkin}:9411
+        base-url: http://${ZIPKIN_HOST:localhost}:9411
 
 
 amazon:
@@ -16,9 +16,11 @@ amazon:
     #    access-key: AKIATP4TDBGPAJUNI5EY
     #    secret-key: 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
     aws:
-        access-key: "minio-user"
-        secret-key: "minio-password"
-        endpoint: http://minio-service.twitter-website.svc.cluster.local:9000 ##minio server 
+        accessKey: "minio-user"
+        secretKey: "minio-password"
+        region.static: us-east-1
+        service-endpoint: http://minio:9000 ##minio server docker
+        ##service-endpoint: http://minio.twitter-website.svc.cluster.local:9000 ##minio server kube 
 
     
 
@@ -27,12 +29,15 @@ amazon:
 eureka:
     client:
         service-url:
-            defaultZone: http://${EUREKA_HOST:eureka-server}:8761/eureka
-        fetch-registry: true
-        register-with-eureka: true
+            defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+        fetchRegistry: ${FETCH_REGISTRY:true}
+        registerWithEureka: ${REGISTER_WITH_EUREKA:true}
     instance:
-        hostname: ${EUREKA_HOST:localhost}
-        preferIpAddress : true
+        hostname: ${HOST_NAME:${spring.application.name}}  # work on swarm
+        instance-id: ${spring.application.name}:${random.uuid}
+        leaseRenewalIntervalInSeconds: ${LEASE_RENEWAL_INTERVAl_IN_SECONDS:10}
+        leaseExpirationDurationInSeconds: ${LEASE_EXPIRATION_DURATIONIN_SECONDS:20}
+        preferIpAddress: ${PREFER_IP_ADDRESS:false}
 
 management:
     endpoints:

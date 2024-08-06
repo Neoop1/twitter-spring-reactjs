@@ -168,6 +168,9 @@ services:
         hostname: eureka-server
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: false
+            FETCH_REGISTRY: false
             ZIPKIN_HOST: zipkin
         ports:
             - "8761:8761"
@@ -190,6 +193,9 @@ services:
         hostname: config-server
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
             ZIPKIN_HOST: zipkin
         #    MINIO-Access-Key: 
         #    MINIO-Secret-Key: 
@@ -240,6 +246,10 @@ services:
         hostname: user-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -271,6 +281,10 @@ services:
         hostname: tweet-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -301,6 +315,10 @@ services:
         hostname: topic-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -333,6 +351,10 @@ services:
         hostname: tag-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -363,6 +385,10 @@ services:
         hostname: lists-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -393,10 +419,16 @@ services:
         hostname: chat-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
             RABBITMQ_HOST: rabbitmq
+
+
         ports:
             - "8006:8006"
         networks:
@@ -423,6 +455,10 @@ services:
         hostname: notification-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -453,6 +489,10 @@ services:
         hostname: email-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         ports:
@@ -478,6 +518,9 @@ services:
         hostname: image-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         ports:
@@ -503,6 +546,9 @@ services:
         hostname: websocket-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         ports:
@@ -522,7 +568,7 @@ services:
         restart: unless-stopped        
             
     nginxproxy:
-        image: neoop1/twitter-nginxproxy-service:v0.5
+        image: neoop1/twitter-nginxproxy-service:v0.6
         build:
           context: ./nginxproxy
           dockerfile: Dockerfile

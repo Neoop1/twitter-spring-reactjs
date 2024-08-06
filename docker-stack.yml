@@ -212,13 +212,13 @@ services:
         restart: unless-stopped
 
     config-server:
-        image: neoop1/twitter-config-server:v0.10
+        image: neoop1/twitter-config-server:v0.12
         build:
           context: ./config-server
           dockerfile: Dockerfile
         hostname: config-server
         deploy:
-           replicas: 2
+           replicas: 1
            placement:
               constraints:
                 - "node.role==worker"
@@ -588,7 +588,7 @@ services:
  
 
     nginxproxy:
-        image: neoop1/twitter-nginxproxy-service:v0.5
+        image: neoop1/twitter-nginxproxy-service:v0.7
         build:
           context: ./nginxproxy
           dockerfile: Dockerfile

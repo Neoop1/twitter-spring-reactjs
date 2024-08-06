@@ -17,7 +17,7 @@ spec:
         image: minio/mc
         env:
         - name: MINIO_URL
-          value: "http://minio-service.twitter-website.svc.cluster.local:9000"
+          value: "http://minio.twitter-website.svc.cluster.local:9000"
         - name: MINIO_ROOT_USER
           valueFrom:
             secretKeyRef:

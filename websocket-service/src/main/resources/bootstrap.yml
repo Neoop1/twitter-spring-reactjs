@@ -3,5 +3,5 @@ spring:
         name: websocket-service
     cloud:
         config:
-            uri: http://${CONFIG_SERVER_HOST:config-server}:8888/
+            uri: http://${CONFIG_SERVER_HOST:localhost}:8888/
             
