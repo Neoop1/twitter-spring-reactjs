@@ -573,7 +573,7 @@ services:
         networks:
             - spring
         ports:
-          - "8181:80"
+          - "80:80"
         #depends_on:
         #    - frontend
 
