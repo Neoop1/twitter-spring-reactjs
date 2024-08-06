@@ -598,11 +598,11 @@ services:
             - websocket-service
         labels:
             - "traefik.enable=true"
-            - "traefik.http.services.frontend.loadbalancer.server.port=80"
             - "traefik.docker.network=spring"
 
 
             - "traefik.http.routers.frontend.entrypoints=web"
+            - "traefik.http.services.frontend.loadbalancer.server.port=80"
             - "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
 
 
