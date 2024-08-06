@@ -152,7 +152,7 @@ services:
         image: prom/prometheus
         container_name: prometheus
         ports:
-            - "9091:9090"
+            - "9090:9090"
         volumes:
             - ./dashboard/prometheus.yml:/etc/prometheus/prometheus.yml
             - ./prometheus:/prometheus
@@ -166,6 +166,8 @@ services:
           context: eureka-server
         container_name: eureka-server
         hostname: eureka-server
+        args:
+            ZIPKIN_HOST: zipkin
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
@@ -216,8 +218,7 @@ services:
 
     api-gateway:
         build:
-          context: ./api-gateway
-          dockerfile: Dockerfile
+          context: api-gateway
         container_name: api-gateway
         hostname: api-gateway
         environment:
