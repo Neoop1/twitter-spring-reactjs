@@ -578,7 +578,7 @@ services:
             - frontend
 
     frontend:   
-        image: neoop1/twitter-frontend:v0.8
+        image: neoop1/twitter-frontend:v0.10
         build:
           context: ./frontend
           dockerfile: Dockerfile
@@ -607,12 +607,6 @@ services:
 
             # - "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
       
-            - "traefik.http.routers.frontend.middlewares=frontend-redirectregex, frontend-replacepathregex"
-      
-            - "traefik.http.middlewares.frontend-replacepathregex.replacepathregex.regex=^/(.*)"
-            - "traefik.http.middlewares.frontend-replacepathregex.replacepathregex.replacement=/$$1"
-            - "traefik.http.middlewares.frontend-redirectregex.redirectregex.regex=^(.*)/$$"
-            - "traefik.http.middlewares.frontend-redirectregex.redirectregex.replacement=$$1/"
                   #- traefik.http.routers.frontend.tls=true
       
             #- traefik.http.routers.frontend.entrypoints=frontend-secure
@@ -682,16 +676,19 @@ services:
            timeout: 5s
            retries: 5
            start_period: 40s
-        #labels:
-        #    - "traefik.enable=true"
-        #    - "traefik.docker.network=spring"
-        #    - "traefik.http.routers.backend.entrypoints=web"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=spring"
+            - "traefik.http.routers.backend.entrypoints=web"
+            - "traefik.backend.rule=Host(`twitter.local`);PathPrefix(`/websocket`)"
+            - "traefik.backend.rule=Host(`twitter.local`);PathPrefix(`/ui/v1`)"
           #  
           #  - traefik.http.routers.backend.entrypoints=backend
           #  - traefik.http.routers.backend.service=backend
 #
 #
           #  - "traefik.backend.rule=Host(`twitter.local`);PathPrefixStrip:/websocket && PathPrefix(`/ui/v1`)"
+
           ##  - "traefik.http.routers.backend.rule=PathPrefixStrip:/websocket;AddPrefix:/ui/v1;"
           ##  - "traefik.http.services.backend.loadbalancer.server.port=8000"
     
