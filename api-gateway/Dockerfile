@@ -4,5 +4,5 @@ WORKDIR /app
 COPY target/api-gateway-0.0.1-SNAPSHOT.jar .
 COPY wait-for-it.sh .
 RUN chmod +x ./wait-for-it.sh
-ENTRYPOINT ["./wait-for-it.sh", "-t", "30" ,"-s" , "${CONFIG_SERVER_HOST}:8888", "--", "java", "-jar", "api-gateway-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["./wait-for-it.sh", "-t", "30" ,"-s" , "config-server:8888", "--", "java", "-jar", "api-gateway-0.0.1-SNAPSHOT.jar"]
 #CMD ["java", "-jar", "api-gateway-0.0.1-SNAPSHOT.jar"]
