@@ -217,39 +217,23 @@ services:
             start_period: 20s
             timeout: 10s   
 
-    api-gateway:
-        build:
-          context: api-gateway
-        container_name: api-gateway
-        hostname: api-gateway
-        environment:
-            EUREKA_HOST: eureka-server
-            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
-            CONFIG_SERVER_HOST: config-server
-            ZIPKIN_HOST: zipkin
-        ports:
-            - ":8000:8000"
-        networks:
-            - spring
-        depends_on:
-            - zipkin
-            - eureka-server
-            - config-server
-        healthcheck:
-           test: "curl --fail --silent localhost:8000/actuator/health | grep UP || exit 1"
-           interval: 20s
-           timeout: 5s
-           retries: 5
-           start_period: 40s
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.backend.rule=Host(`twitter.local`) && PathPrefix(`/ui/v1`)"
-            - "traefik.http.routers.backend.rule=PathPrefixStrip:/websocket;AddPrefix:/ui/v1;"
-            - "traefik.http.services.backend.loadbalancer.server.port=8000"
-            - "traefik.docker.network=spring"
-        restart: unless-stopped
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     user-service:
         build:
@@ -622,7 +606,7 @@ services:
 
 
             - traefik.http.routers.frontend.entrypoints=frontend
-            - traefik.http.routers.frontend.rule=Host(`twitter.local`)
+            - traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
             - traefik.http.routers.frontend.service=frontend
             #- traefik.http.routers.frontend.tls=true
       
@@ -643,12 +627,15 @@ services:
           - --api.dashboard=true # (Optional) Enable Dashboard, don't do in production
           - --api.insecure=true  # (Optional) Enable Dashboard, don't do in production
           - --providers.docker
-          - --entrypoints.web.address=:8081
+
+          - --entrypoints.frontend.address=:80
+
+          - --entrypoints.backend.address=:8000
           #- --entrypoints.web.http.redirections.entrypoint.to=frontend-secure
           #- --entrypoints.web.http.redirections.entrypoint.scheme=https
           #- --entrypoints.web.http.redirections.entrypoint.permanent=true
           #- --entrypoints.frontend-secure.address=:443
-          - --entrypoints.frontend.address=:80
+
 
         volumes:
           - /run/docker.sock:/run/docker.sock:ro
@@ -662,6 +649,49 @@ services:
         #   - monitoring
         restart: unless-stopped
 
+
+
+    api-gateway:
+        build:
+          context: api-gateway
+        container_name: api-gateway
+        hostname: api-gateway
+        environment:
+            EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            CONFIG_SERVER_HOST: config-server
+            ZIPKIN_HOST: zipkin
+        ports:
+            - ":8000:8000"
+        networks:
+            - spring
+        depends_on:
+            - zipkin
+            - eureka-server
+            - config-server
+        healthcheck:
+           test: "curl --fail --silent localhost:8000/actuator/health | grep UP || exit 1"
+           interval: 20s
+           timeout: 5s
+           retries: 5
+           start_period: 40s
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=spring"
+
+            
+            - traefik.http.routers.backend.entrypoints=backend
+            - traefik.http.routers.backend.service=backend
+
+
+            - "traefik.http.routers.backend.rule=Host(`twitter.local`) && PathPrefix(`/ui/v1`)"
+            - "traefik.http.routers.backend.rule=PathPrefixStrip:/websocket;AddPrefix:/ui/v1;"
+            - "traefik.http.services.backend.loadbalancer.server.port=8000"
+
+
+        restart: unless-stopped
 networks:
     postgres:
         driver: bridge
