@@ -677,10 +677,10 @@ services:
            timeout: 5s
            retries: 5
            start_period: 40s
-        labels:
-            - "traefik.enable=true"
-            - "traefik.docker.network=spring"
-            - "traefik.http.routers.backend.entrypoints=web"
+        #labels:
+        #    - "traefik.enable=true"
+        #    - "traefik.docker.network=spring"
+        #    - "traefik.http.routers.backend.entrypoints=web"
           #  
           #  - traefik.http.routers.backend.entrypoints=backend
           #  - traefik.http.routers.backend.service=backend
