@@ -603,12 +603,17 @@ services:
 
             - "traefik.http.routers.frontend.entrypoints=web"
             - "traefik.http.services.frontend.loadbalancer.server.port=80"
-            - "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
+            - "traefik.http.routers.frontend.rule=Host(`twitter.local`)"
 
-
-
-
-            #- traefik.http.routers.frontend.tls=true
+            # - "traefik.http.routers.frontend.rule=Host(`twitter.local`) && PathPrefix(`/`)"
+      
+            - "traefik.http.routers.frontend.middlewares=portainer-redirectregex, portainer-replacepathregex"
+      
+            - "traefik.http.middlewares.frontend-replacepathregex.replacepathregex.regex=^/(.*)"
+            - "traefik.http.middlewares.frontend-replacepathregex.replacepathregex.replacement=/$$1"
+            - "traefik.http.middlewares.frontend-redirectregex.redirectregex.regex=^(.*)/$$"
+            - "traefik.http.middlewares.frontend-redirectregex.redirectregex.replacement=$$1/"
+                  #- traefik.http.routers.frontend.tls=true
       
             #- traefik.http.routers.frontend.entrypoints=frontend-secure
             #- traefik.http.routers.frontend.rule=Host(`twitter.local`)
