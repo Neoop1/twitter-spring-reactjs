@@ -600,7 +600,7 @@ services:
           dockerfile: Dockerfile
         container_name: frontend
         hostname: frontend
-        ports:
+        #ports:
         #  - "80:80"
         networks:
             - spring
