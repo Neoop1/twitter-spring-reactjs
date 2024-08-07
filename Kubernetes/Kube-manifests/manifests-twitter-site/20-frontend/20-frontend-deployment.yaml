@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: 'neoop1/twitter-frontend:v0.8'
+          image: 'neoop1/twitter-frontend:v0.10'
           imagePullPolicy: Always
           #resources:
           #  requests:

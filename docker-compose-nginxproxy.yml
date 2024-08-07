@@ -137,25 +137,16 @@ services:
         ports:
             - "3001:3000"
         volumes:
-            - grafana_data:/var/lib/grafana
-            #- ./grafana:/var/lib/grafana
+            - ./grafana:/var/lib/grafana
         depends_on:
             - zookeeper
         environment:
             - GF_SECURITY_ADMIN_USER=admin
             - GF_SECURITY_ADMIN_PASSWORD=admin
-            - GF_PATHS_PROVISIONING=/etc/grafana/provisioning/
-            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/micrometer-spring-throughput_rev2.json
         networks:
             monitoring:
                 aliases:
                     - grafana
-        labels:
-            - "traefik.enable=true"
-            - "traefik.docker.network=monitoring"
-
-            - "traefik.http.routers.grafana.rule: Host(`twitter.local`) && PathPrefix(`/grafana`)"
-            - "traefik.http.services.grafana.loadbalancer.server.port: 3000"
 
     prometheus:
         image: prom/prometheus
@@ -252,11 +243,6 @@ services:
            timeout: 5s
            retries: 5
            start_period: 40s
-        labels:
-            - "traefik.enable=true"
-            - "traefik.docker.network=spring"
-            - "traefik.http.routers.backend.entrypoints=web"
-            - "traefik.http.routers.backend.rule=Host(`twitter.local`) && PathPrefix(`/websocket`) || PathPrefix(`/ui/v1`)"
         restart: unless-stopped
 
     user-service:
@@ -587,6 +573,20 @@ services:
            start_period: 40s
         restart: unless-stopped        
             
+    nginxproxy:
+        image: neoop1/twitter-nginxproxy-service:v0.6
+        build:
+          context: ./nginxproxy
+          dockerfile: Dockerfile
+        container_name: nginxproxy
+        hostname: nginxproxy
+        networks:
+            - spring
+        ports:
+          - "80:80"
+        depends_on:
+            - frontend
+
     frontend:   
         image: neoop1/twitter-frontend:v0.10
         build:
@@ -606,51 +606,9 @@ services:
             - eureka-server
             - config-server
             - websocket-service
-        labels:
-            - "traefik.enable=true"
-            - "traefik.docker.network=spring"
-
-
-            - "traefik.http.routers.frontend.entrypoints=web"
-            - "traefik.http.services.frontend.loadbalancer.server.port=80"
-            - "traefik.http.routers.frontend.rule=Host(`twitter.local`)"
-      
-            #- traefik.http.routers.frontend.entrypoints=frontend-secure
-            #- traefik.http.routers.frontend.rule=Host(`twitter.local`)
-            #- traefik.http.routers.frontend.tls=true
 
             
-    traefik:
-        image: docker.io/library/traefik:v3.1.1
-        container_name: traefik
-        ports:
-          - 80:80
-        # - 443:443
-        # (Optional) Enable Dashboard, don't do in production
-          - 8088:8080
-        command:
-          - --api.dashboard=true # (Optional) Enable Dashboard, don't do in production
-          - --api.insecure=true  # (Optional) Enable Dashboard, don't do in production
-          - --providers.docker  
-          - "--providers.docker.exposedbydefault=false" # (Optional) Enable this, if you want to expose all containers automatically
-          - "--entrypoints.web.address=:80"
 
-          #- --entrypoints.backend.address=:8000
-          #- --entrypoints.web.http.redirections.entrypoint.to=frontend-sec
-          #- --entrypoints.web.http.redirections.entrypoint.scheme=https
-          #- --entrypoints.web.http.redirections.entrypoint.permanent=true
-          #- --entrypoints.frontend-secure.address=:443
-        volumes:
-          - /run/docker.sock:/run/docker.sock:ro
-        #  - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
-        #  - ./traefik/conf/:/etc/traefik/conf/
-        #  - ./traefik/certs/:/etc/traefik/certs/
-        #environment:
-        #   - CF_DNS_API_TOKEN=cf-dns-api-token
-        networks:
-           - spring
-           - monitoring
-        restart: unless-stopped
 
 
 
@@ -665,4 +623,4 @@ volumes:
     postgres_prod:
     pgadmin:
     minio_data:
-    grafana_data:
+    
