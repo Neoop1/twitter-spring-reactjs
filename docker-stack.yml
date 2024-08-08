@@ -1,6 +1,5 @@
 services:
     postgres:
-        #container_name: postgres
         image: postgres
         hostname: postgres
         command: -c 'max_connections=200'
@@ -27,7 +26,6 @@ services:
            start_period: 60s 
 
     minio:
-        #container_name: minio
         image: quay.io/minio/minio
         hostname: minio
         command: server /data --console-address ":9001" 
@@ -62,13 +60,12 @@ services:
             - spring-swarm
 
     pgadmin:
-        #container_name: pgadmin
         image: dpage/pgadmin4
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         environment:
             PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
             PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
@@ -84,11 +81,10 @@ services:
     zipkin:
         image: openzipkin/zipkin
         hostname: zipkin
-        #container_name: zipkin
         deploy:
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         #ports:
         #    - "9411:9411"
         networks:
@@ -96,7 +92,6 @@ services:
 
     rabbitmq:
         image: rabbitmq:3.9.11-management-alpine
-        #container_name: rabbitmq
         hostname: rabbitmq
         deploy:
            placement:
@@ -114,9 +109,9 @@ services:
         hostname: zookeeper
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         #ports:
         #    - "2181:2181"
         environment:
@@ -167,23 +162,47 @@ services:
         environment:
             - GF_SECURITY_ADMIN_USER=admin
             - GF_SECURITY_ADMIN_PASSWORD=admin
+            - GF_PATHS_PROVISIONING=/etc/grafana/provisioning/
+            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/micrometer-spring.json
         networks:
             monitoring-swarm:
                 aliases:
                     - grafana
+
+    docker-api-socat: ## for prometheus - metric from docker sock
+        container_name: docker-api-socat
+        image: tecnativa/docker-socket-proxy:0.2
+        hostname: docker-api-socat
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+          NODES: 1
+          NETWORKS: 1
+          SERVICES: 1
+          TASKS: 1
+        logging:
+          driver: none
+        networks:
+          monitoring-swarm:
+        #restart: unless-stopped  
+
+
     prometheus:
         image: prom/prometheus
-        #container_name: prometheus
         ports:
-            - "9090:9090"
+           #- "9090:9090"
+            - "9091:9090"
         volumes:
-            - ./dashboard/prometheus.yml:/etc/prometheus/prometheus.yml
+            - ./dashboard/prometheus-dockerswarm.yml:/etc/prometheus/prometheus.yml
             - prometheus_data:/prometheus
-           # - ./prometheus:/prometheus
+          # - ./prometheus:/prometheus
         networks:
             monitoring-swarm:
                 aliases:
                     - prometheus
+
+
+
     eureka-server:
         image: neoop1/twitter-eureka-server
         build:
@@ -193,16 +212,24 @@ services:
         hostname: eureka-server
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: false
+            FETCH_REGISTRY: false
             ZIPKIN_HOST: zipkin
-        ports:
-            - "8761:8761"
+        #ports:
+            #- "8761:8761"
         networks:
             - spring-swarm
+            - monitoring-swarm
+        labels:
+            prometheus-job: eureka-server
+            prometheus-port: 8761
+            prometheus-path: /actuator/prometheus
         healthcheck:
           test: "curl --fail --silent localhost:8761/actuator/health | grep UP || exit 1"
           interval: 20s
@@ -219,16 +246,24 @@ services:
         hostname: config-server
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
             ZIPKIN_HOST: zipkin
         #ports:
         #    - "8888:8888"
         networks:
             - spring-swarm
+            - monitoring-swarm
+        labels:
+            prometheus-job: config-server
+            prometheus-port: 8888
+            prometheus-path: /actuator/prometheus
         healthcheck:
             test: "curl --fail http://config-server:8888/api-gateway/cloud/config/ || exit 1"
             interval: 20s
@@ -245,17 +280,25 @@ services:
         hostname: api-gateway
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         #ports:
         #    - ":8000:8000"
         networks:
-            - spring-swarm 
+            - spring-swarm
+            - monitoring-swarm 
+        labels:
+            - "prometheus-job=api-gateway"
+            - "prometheus-port=8000"
+            - "prometheus-path=/actuator/prometheus"
         healthcheck:
            test: "curl --fail --silent localhost:8000/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -271,19 +314,26 @@ services:
         build:
           context: ./user-service
           dockerfile: Dockerfile
-        #container_name: user-service
         hostname: user-service
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
             RABBITMQ_HOST: rabbitmq
+        labels:
+            prometheus-job: user-service
+            prometheus-port: 8001
+            prometheus-path: /actuator/prometheus    
         #ports:
         #   - "8001:8001"
         networks:
@@ -304,15 +354,18 @@ services:
         build:
           context: ./tweet-service
           dockerfile: Dockerfile
-        #container_name: tweet-service
         hostname: tweet-service
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -322,6 +375,10 @@ services:
         networks:
             - postgres-swarm
             - spring-swarm
+        labels:
+            prometheus-job: tweet-service
+            prometheus-port: 8002
+            prometheus-path: /actuator/prometheus
         healthcheck:
            test: "curl --fail --silent localhost:8002/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -336,15 +393,18 @@ services:
         build:
           context: ./topic-service
           dockerfile: Dockerfile
-        #container_name: topic-service
         hostname: topic-service
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -354,6 +414,10 @@ services:
         networks:
             - postgres-swarm
             - spring-swarm
+        labels:
+            prometheus-job: topic-service
+            prometheus-port: 8003
+            prometheus-path: /actuator/prometheus 
         healthcheck:
            test: "curl --fail --silent localhost:8003/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -370,15 +434,18 @@ services:
         build:
           context: ./tag-service
           dockerfile: Dockerfile
-        #container_name: tag-service
         hostname: tag-service
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -388,6 +455,11 @@ services:
         networks:
             - postgres-swarm
             - spring-swarm
+            - monitoring-swarm
+        labels:
+            prometheus-job: tag-service
+            prometheus-port: 8004
+            prometheus-path: /actuator/prometheus
         healthcheck:
            test: "curl --fail --silent localhost:8004/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -403,15 +475,18 @@ services:
         build:
           context: ./lists-service
           dockerfile: Dockerfile
-        #container_name: lists-service
         hostname: lists-service
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
@@ -421,6 +496,11 @@ services:
         networks:
             - postgres-swarm
             - spring-swarm
+            - monitoring-swarm
+        labels:
+            prometheus-job: lists-service
+            prometheus-port: 8005
+            prometheus-path: /actuator/prometheus   
         healthcheck:
            test: "curl --fail --silent localhost:8005/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -437,24 +517,32 @@ services:
         build:
           context: ./chat-service
           dockerfile: Dockerfile
-        #container_name: chat-service
         hostname: chat-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
             RABBITMQ_HOST: rabbitmq
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         #ports:
         #    - "8006:8006"
         networks:
             - postgres-swarm
             - spring-swarm
+            - monitoring-swarm
+        labels:
+            prometheus-job: chat-service
+            prometheus-port: 8006
+            prometheus-path: /actuator/prometheus  
         healthcheck:
            test: "curl --fail --silent localhost:8006/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -470,24 +558,32 @@ services:
         build:
           context: ./notification-service
           dockerfile: Dockerfile
-        #container_name: notification-service
         hostname: notification-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
             RABBITMQ_HOST: rabbitmq
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         #ports:
         #    - "8007:8007"
         networks:
             - postgres-swarm
             - spring-swarm
+            - monitoring-swarm
+        labels:
+            prometheus-job: notification-service
+            prometheus-port: 8007
+            prometheus-path: /actuator/prometheus 
         healthcheck:
            test: "curl --fail --silent localhost:8007/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -496,28 +592,34 @@ services:
            start_period: 40s
         restart: unless-stopped
 
-
-
     email-service:
         image: neoop1/twitter-email-service:latest
         build:
           context: ./email-service
           dockerfile: Dockerfile
-        #container_name: email-service
         hostname: email-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
+            BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         #ports:
         #    - "8020:8020"
         networks:
             - spring-swarm
+            - monitoring-swarm
+        labels:
+            prometheus-job: email-service
+            prometheus-port: 8020
+            prometheus-path: /actuator/prometheus   
         healthcheck:
            test: "curl --fail --silent localhost:8020/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -532,21 +634,28 @@ services:
         build:
           context: ./image-service
           dockerfile: Dockerfile
-        #container_name: image-service
         hostname: image-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         #ports:
         #    - "8021:8021"
         networks:
             - spring-swarm
+            - monitoring-swarm
+        labels:
+            prometheus-job: image-service
+            prometheus-port: 8021
+            prometheus-path: /actuator/prometheus
         healthcheck:
            test: "curl --fail --silent localhost:8021/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -562,21 +671,28 @@ services:
         build:
           context: ./websocket-service
           dockerfile: Dockerfile
-        #container_name: websocket-service
         hostname: websocket-service
         environment:
             EUREKA_HOST: eureka-server
+            EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
+            REGISTER_WITH_EUREKA: true
+            FETCH_REGISTRY: true
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         deploy:
            replicas: 1
-           placement:
-              constraints:
-                - "node.role==worker"
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         #ports:
         #    - "8022:8022"
         networks:
             - spring-swarm
+            - monitoring-swarm
+        labels:
+            prometheus-job: websocket-service
+            prometheus-port: 8022
+            prometheus-path: /actuator/prometheus
         healthcheck:
            test: "curl --fail --silent localhost:8022/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -592,7 +708,6 @@ services:
         build:
           context: ./nginxproxy
           dockerfile: Dockerfile
-        #container_name: nginxproxy
         hostname: nginxproxy
         networks:
             - spring-swarm
@@ -601,14 +716,11 @@ services:
 
 
     frontend:   
-        image: neoop1/twitter-frontend:v0.8
+        image: neoop1/twitter-frontend:v0.10
         build:
           context: ./frontend
           dockerfile: Dockerfile
-        #container_name: frontend
         hostname: frontend
-        environment:
-           SITE_HOST_NAME: twitter.local
         #ports:
         #    - "3000:3000"
         networks:
@@ -622,13 +734,15 @@ services:
 networks:
     postgres-swarm:
         driver: bridge
-        external: true
+        external: false # neet test 
 
     spring-swarm:
         driver: bridge
         external: true
-    monitoring-swarm:
 
+    monitoring-swarm:
+        driver: bridge
+        external: false # neet test 
 volumes:
     postgres_prodtest:
     pgadmin:

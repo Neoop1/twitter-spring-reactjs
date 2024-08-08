@@ -27,10 +27,17 @@ eureka:
         preferIpAddress: ${PREFER_IP_ADDRESS:false}
  
 management:
-  endpoints:
-    health:
-     show-details: always
-    web:
-      base-path: /actuator
-      exposure:
-        include: health
+    endpoints:
+        health:
+         show-details: always
+        web:
+          base-path: /actuator
+          exposure:
+            include: 'prometheus, health'
+    metrics:
+        export:
+            prometheus:
+                enabled: true
+        distribution:
+            percentiles-histogram:
+                "[http.server.requests]": true

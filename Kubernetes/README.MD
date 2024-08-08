@@ -28,7 +28,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 
 
 
-deltet all Terminating pods
+## deltet all Terminating pods
 for p in $(kubectl get pods | grep Terminating | awk '{print $1}'); do kubectl delete pod $p --grace-period=0 --force;done
 
 
