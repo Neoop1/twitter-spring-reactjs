@@ -10,7 +10,9 @@ done
 ### Kube Steps 
 kubectl create ns twitter-website
 
-kubectl apply -f ./complete-demo*.yaml # Delete old Files
+# Delete old Files (!)
+
+kubectl apply -f ./complete-demo*.yaml 
 
 
 

@@ -9,6 +9,11 @@ scrape_configs:
       static_configs:
       - targets: ['localhost:9090']
 
+   - job_name: 'cadvisor'
+      scrape_interval: 5s
+      static_configs:
+        - targets: ['cadvisor:8080'] 
+        
     # Create a job for Docker daemons.
     - job_name: 'docker-nodes'
       dockerswarm_sd_configs:
@@ -33,11 +38,11 @@ scrape_configs:
         - source_labels: [__meta_dockerswarm_service_label_prometheus_job]
           regex: .+
           action: keep
-        # Set the metrics path the `prometheus.path` label if it exists. ## '/actuator/prometheus'
+        # Set the metrics path the `prometheus-path` label if it exists. ## '/actuator/prometheus'
         - source_labels: [__meta_dockerswarm_service_label_prometheus_path]
           target_label: __metrics_path__
           regex: (.+)
-        # Set the target port from the `prometheus.port` label if it exists.
+        # Set the target port from the `prometheus-port` label if it exists.
         - source_labels: [__address__, __meta_dockerswarm_service_label_prometheus_port]
           target_label: __address__
           regex: '(.*):(\d+);(\d+)'
@@ -45,6 +50,9 @@ scrape_configs:
         # Drop not accessible for prometheus network 
         - source_labels: [__meta_dockerswarm_network_label_com_docker_compose_network]
           regex: 'spring-swarm'
+          action: drop
+        - source_labels: [__meta_docker_network_label_com_docker_compose_network]
+          regex: 'postgres-swarm'
           action: drop
         # Change instance name in prometheus
         - source_labels: [__meta_dockerswarm_service_label_prometheus_job]

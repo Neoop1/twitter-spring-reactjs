@@ -149,13 +149,28 @@ services:
             - GF_SECURITY_ADMIN_USER=admin
             - GF_SECURITY_ADMIN_PASSWORD=admin
             - GF_PATHS_PROVISIONING=/etc/grafana/provisioning/
-            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/micrometer-spring.json
+            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/docker-micrometer-spring.json
         networks:
             monitoring:
                 aliases:
                     - grafana
-
- 
+    ## Test
+    cadvisor:
+      image: gcr.io/cadvisor/cadvisor
+      hostname: cadvisor
+      volumes:
+        - "/:/rootfs:ro"
+        - "/var/run:/var/run:ro"
+        - "/sys:/sys:ro"
+        - "/var/lib/docker/:/var/lib/docker:ro"
+        - "/dev/disk/:/dev/disk:ro"
+      ports:
+        - "8181:8080"
+      networks:
+        - spring
+        - monitoring
+        - postgres
+  
     prometheus:
         image: prom/prometheus
         container_name: prometheus

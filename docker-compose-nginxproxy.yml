@@ -18,13 +18,13 @@ services:
             - "5432:5432"
         networks:
             - postgres
-        restart: unless-stopped
         healthcheck:
            test: ["CMD-SHELL", "pg_isready", "-d", "postgres"]
            interval: 30s
            timeout: 60s
            retries: 5
            start_period: 60s 
+        restart: unless-stopped
 
     minio:
         container_name: minio
@@ -47,6 +47,7 @@ services:
         networks:
             - spring
         restart: unless-stopped
+
     createbuckets:
         image: minio/mc
         depends_on:
@@ -74,7 +75,7 @@ services:
             - "5050:80"
         networks:
             - postgres
-        restart: unless-stopped
+        #restart: unless-stopped
 
     zipkin:
         image: openzipkin/zipkin
@@ -84,6 +85,7 @@ services:
             - "9411:9411"
         networks:
             - spring
+        restart: unless-stopped
 
     rabbitmq:
         image: rabbitmq:3.9.11-management-alpine
@@ -93,6 +95,7 @@ services:
             - "15672:15672"
         networks:
             - spring
+        restart: unless-stopped
 
     zookeeper:
         image: confluentinc/cp-zookeeper:7.0.1
@@ -104,7 +107,7 @@ services:
             ZOOKEEPER_TICK_TIME: 2000
         networks:
             - spring
-
+        restart: unless-stopped
 
     broker:
         image: confluentinc/cp-kafka:7.0.1
@@ -130,6 +133,7 @@ services:
         #   interval: 1s
         #   timeout: 60s
         #   retries: 60
+        restart: unless-stopped
 
     grafana:
         container_name: grafana
@@ -137,29 +141,40 @@ services:
         ports:
             - "3001:3000"
         volumes:
-            - ./grafana:/var/lib/grafana
+            - grafana_data:/var/lib/grafana
+            #- ./grafana:/var/lib/grafana
         depends_on:
             - zookeeper
         environment:
             - GF_SECURITY_ADMIN_USER=admin
             - GF_SECURITY_ADMIN_PASSWORD=admin
+            - GF_PATHS_PROVISIONING=/etc/grafana/provisioning/
+            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/micrometer-spring.json
         networks:
             monitoring:
                 aliases:
                     - grafana
 
+ 
     prometheus:
         image: prom/prometheus
         container_name: prometheus
+        user: root # for - /var/run/docker.sock - security problem
         ports:
-            - "9090:9090"
+           # - "9090:9090"
+             - "9091:9090"
         volumes:
-            - ./dashboard/prometheus.yml:/etc/prometheus/prometheus.yml
-            - ./prometheus:/prometheus
+            - ./dashboard/prometheus-docker.yml:/etc/prometheus/prometheus.yml
+            - /var/run/docker.sock:/var/run/docker.sock:ro # for allow prometheus retrieving scrape targets from Docker Engine hosts.
+           # -  prometheus_data:/prometheus
+           #- ./prometheus:/prometheus
         networks:
             monitoring:
                 aliases:
                     - prometheus
+        extra_hosts:
+          - 'host.docker.internal:host-gateway'
+        #restart: unless-stopped   
 
     eureka-server:
         build:
@@ -168,7 +183,6 @@ services:
             ZIPKIN_HOST: zipkin
         container_name: eureka-server
         hostname: eureka-server
-  
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
@@ -179,6 +193,11 @@ services:
             - "8761:8761"
         networks:
             - spring
+            - monitoring
+        labels:
+            prometheus-job: eureka-server
+            prometheus-port: 8761
+            prometheus-path: /actuator/prometheus
         depends_on:
             - zipkin
         healthcheck:
@@ -207,6 +226,11 @@ services:
             - "8888:8888"
         networks:
             - spring
+            - monitoring
+        labels:
+            prometheus-job: config-server
+            prometheus-port: 8888
+            prometheus-path: /actuator/prometheus
         depends_on:
             - zipkin
             - eureka-server
@@ -216,6 +240,7 @@ services:
             retries: 5
             start_period: 20s
             timeout: 10s   
+        restart: unless-stopped
 
     api-gateway:
         build:
@@ -233,6 +258,11 @@ services:
             - ":8000:8000"
         networks:
             - spring
+            - monitoring
+        labels:
+            - "prometheus-job=api-gateway"
+            - "prometheus-port=8000"
+            - "prometheus-path=/actuator/prometheus"
         depends_on:
             - zipkin
             - eureka-server
@@ -265,6 +295,11 @@ services:
         networks:
             - postgres
             - spring
+            - monitoring
+        labels:
+            prometheus-job: user-service
+            prometheus-port: 8001
+            prometheus-path: /actuator/prometheus            
         depends_on:
             - postgres
             - zipkin
@@ -300,6 +335,11 @@ services:
         networks:
             - postgres
             - spring
+            - monitoring
+        labels:
+            prometheus-job: tweet-service
+            prometheus-port: 8002
+            prometheus-path: /actuator/prometheus
         depends_on:
             - postgres
             - zipkin
@@ -334,6 +374,11 @@ services:
         networks:
             - postgres
             - spring
+            - monitoring
+        labels:
+            prometheus-job: topic-service
+            prometheus-port: 8003
+            prometheus-path: /actuator/prometheus 
         depends_on:
             - postgres
             - zipkin
@@ -370,6 +415,11 @@ services:
         networks:
             - postgres
             - spring
+            - monitoring
+        labels:
+            prometheus-job: tag-service
+            prometheus-port: 8004
+            prometheus-path: /actuator/prometheus
         depends_on:
             - postgres
             - zipkin
@@ -404,6 +454,11 @@ services:
         networks:
             - postgres
             - spring
+            - monitoring
+        labels:
+            prometheus-job: lists-service
+            prometheus-port: 8005
+            prometheus-path: /actuator/prometheus            
         depends_on:
             - postgres
             - zipkin
@@ -433,13 +488,16 @@ services:
             DATASOURCE_HOST: postgres
             ZIPKIN_HOST: zipkin
             RABBITMQ_HOST: rabbitmq
-
-
         ports:
             - "8006:8006"
         networks:
             - postgres
             - spring
+            - monitoring
+        labels:
+            prometheus-job: chat-service
+            prometheus-port: 8006
+            prometheus-path: /actuator/prometheus            
         depends_on:
             - postgres
             - zipkin
@@ -474,6 +532,11 @@ services:
         networks:
             - postgres
             - spring
+            - monitoring
+        labels:
+            prometheus-job: notification-service
+            prometheus-port: 8007
+            prometheus-path: /actuator/prometheus            
         depends_on:
             - postgres
             - zipkin
@@ -505,6 +568,11 @@ services:
             - "8020:8020"
         networks:
             - spring
+            - monitoring
+        labels:
+            prometheus-job: email-service
+            prometheus-port: 8020
+            prometheus-path: /actuator/prometheus            
         depends_on:
             - zipkin
             - eureka-server
@@ -533,6 +601,11 @@ services:
             - "8021:8021"
         networks:
             - spring
+            - monitoring
+        labels:
+            prometheus-job: image-service
+            prometheus-port: 8021
+            prometheus-path: /actuator/prometheus
         depends_on:
             - zipkin
             - eureka-server
@@ -561,6 +634,11 @@ services:
             - "8022:8022"
         networks:
             - spring
+            - monitoring
+        labels:
+            prometheus-job: websocket-service
+            prometheus-port: 8022
+            prometheus-path: /actuator/prometheus
         depends_on:
             - zipkin
             - eureka-server
@@ -572,7 +650,7 @@ services:
            retries: 5
            start_period: 40s
         restart: unless-stopped        
-            
+        
     nginxproxy:
         image: neoop1/twitter-nginxproxy-service:v0.6
         build:
@@ -607,6 +685,8 @@ services:
             - config-server
             - websocket-service
 
+
+
             
 
 
@@ -623,4 +703,5 @@ volumes:
     postgres_prod:
     pgadmin:
     minio_data:
-    
+    grafana_data:
+    prometheus_data:

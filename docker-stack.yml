@@ -1,3 +1,9 @@
+## Networks for Docker Swarm
+## docker network create -d overlay spring-swarm
+## docker network create -d overlay postgres-swarm
+## docker network create -d overlay frontend-swarm-network
+
+
 services:
     postgres:
         image: postgres
@@ -147,6 +153,22 @@ services:
         #   retries: 60
         restart: unless-stopped
 
+    cadvisor:
+      image: gcr.io/cadvisor/cadvisor
+      hostname: cadvisor
+      volumes:
+        - "/:/rootfs:ro"
+        - "/var/run:/var/run:ro"
+        - "/sys:/sys:ro"
+        - "/var/lib/docker/:/var/lib/docker:ro"
+        - "/dev/disk/:/dev/disk:ro"
+      ports:
+        - "8181:8080"
+      networks:
+        - spring-swarm
+        - monitoring-swarm
+        - postgres-swarm
+
     grafana:
         image: neoop1/twitter-grafana
         build:
@@ -163,7 +185,7 @@ services:
             - GF_SECURITY_ADMIN_USER=admin
             - GF_SECURITY_ADMIN_PASSWORD=admin
             - GF_PATHS_PROVISIONING=/etc/grafana/provisioning/
-            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/micrometer-spring.json
+            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/docker-micrometer-spring.json
         networks:
             monitoring-swarm:
                 aliases:
@@ -296,6 +318,10 @@ services:
             - spring-swarm
             - monitoring-swarm 
         labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=spring-swarm"
+            - "traefik.http.routers.backend.entrypoints=web"
+            - "traefik.http.routers.backend.rule=Host(`twitter.local`) && PathPrefix(`/websocket`) || PathPrefix(`/ui/v1`)"
             - "prometheus-job=api-gateway"
             - "prometheus-port=8000"
             - "prometheus-path=/actuator/prometheus"
@@ -339,6 +365,7 @@ services:
         networks:
             - postgres-swarm
             - spring-swarm
+            - monitoring-swarm
         healthcheck:
            test: "curl --fail --silent localhost:8001/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -375,6 +402,7 @@ services:
         networks:
             - postgres-swarm
             - spring-swarm
+            - monitoring-swarm
         labels:
             prometheus-job: tweet-service
             prometheus-port: 8002
@@ -414,6 +442,7 @@ services:
         networks:
             - postgres-swarm
             - spring-swarm
+            - monitoring-swarm
         labels:
             prometheus-job: topic-service
             prometheus-port: 8003
@@ -701,19 +730,49 @@ services:
            start_period: 40s
         restart: unless-stopped
 
- 
+    #nginxproxy:
+    #    image: neoop1/twitter-nginxproxy-service:v0.7
+    #    build:
+    #      context: ./nginxproxy
+    #      dockerfile: Dockerfile
+    #    hostname: nginxproxy
+    #    networks:
+    #        - spring-swarm
+    #    ports:
+    #      - "80:80"
 
-    nginxproxy:
-        image: neoop1/twitter-nginxproxy-service:v0.7
-        build:
-          context: ./nginxproxy
-          dockerfile: Dockerfile
-        hostname: nginxproxy
-        networks:
-            - spring-swarm
+    traefik:
+        image: docker.io/library/traefik:v3.1.1
+        container_name: traefik
         ports:
-          - "80:80"
+          - 80:80
+        # - 443:443
+        # (Optional) Enable Dashboard, don't do in production
+          - 8088:8080
+        command:
+           - "--api.dashboard=true" # (Optional) Enable Dashboard, don't do in production
+           - "--api.insecure=true"  # (Optional) Enable Dashboard, don't do in production
+           - "--providers.docker"  
+           - "--providers.docker.exposedbydefault=false" # (Optional) Enable this, if you want to expose all containers automatically
 
+           - "--entrypoints.web.address=:80"
+          #- --entrypoints.backend.address=:8000
+          #- --entrypoints.web.http.redirections.entrypoint.to=frontend-secure
+          #- --entrypoints.web.http.redirections.entrypoint.scheme=https
+          #- --entrypoints.web.http.redirections.entrypoint.permanent=true
+          #- --entrypoints.frontend-secure.address=:443
+        volumes:
+           - /run/docker.sock:/run/docker.sock:ro
+        #  - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+        #  - ./traefik/conf/:/etc/traefik/conf/
+        #  - ./traefik/certs/:/etc/traefik/certs/
+        #environment:
+        #   - CF_DNS_API_TOKEN=cf-dns-api-token
+        networks:
+           - spring-swarm
+           - monitoring-swarm
+         # - frontend-swarm-network
+        restart: unless-stopped
 
     frontend:   
         image: neoop1/twitter-frontend:v0.10
@@ -725,7 +784,17 @@ services:
         #    - "3000:3000"
         networks:
             - spring-swarm
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=spring-swarm"
+            - "traefik.http.routers.frontend.entrypoints=web"
 
+            - "traefik.http.services.frontend.loadbalancer.server.port=80"
+            - "traefik.http.routers.frontend.rule=Host(`twitter.local`)"
+      
+            #- traefik.http.routers.frontend.entrypoints=frontend-secure
+            #- traefik.http.routers.frontend.rule=Host(`twitter.local`)
+            #- traefik.http.routers.frontend.tls=true
         
 
 
@@ -733,16 +802,27 @@ services:
 
 networks:
     postgres-swarm:
-        driver: bridge
-        external: false # neet test 
+        #driver: bridge
+        #external: true
+        driver: overlay
+        internal: true
 
     spring-swarm:
+        #external: true
+        #driver: bridge
+        driver: overlay
+        internal: true
+
+    monitoring-swarm:
+        #external: true
+        #driver: bridge
+        driver: overlay
+        internal: true
+
+    frontend-swarm-network:
         driver: bridge
         external: true
 
-    monitoring-swarm:
-        driver: bridge
-        external: false # neet test 
 volumes:
     postgres_prodtest:
     pgadmin:

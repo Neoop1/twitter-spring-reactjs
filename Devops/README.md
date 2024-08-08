@@ -1,4 +1,4 @@
-## Docker Compose Steps
+## Docker Compose Test Steps
 docker compose up postgres
 docker compose up pgadmin
 docker compose up zipkin
@@ -8,8 +8,8 @@ docker compose up eureka-server
 docker compose up config-server
 docker compose up api-gateway
 docker compose up broker
-docker compose up createbuckets
-docker compose up minio
+
+
 
 docker compose up user-service
 docker compose up websocket-service
@@ -24,104 +24,115 @@ docker compose up tweet-service
 docker compose up frontend
 docker compose up nginxproxy 
 
+docker compose up createbuckets
+docker compose up minio
+
 docker compose up prometheus
 docker compose up grafana
 
+## ---- ## 
+docker compose up postgres zipkin rabbitmq zookeeper
+docker compose up eureka-server  config-server api-gateway broker websocket-service
+docker compose up image-service email-service notification-service chat-service tag-service lists-service topic-service
+docker compose up user-service tweet-service
+docker compose up frontend 
+docker compose up minio createbuckets nginxproxy
+docker compose up prometheus grafana
+
 
 ## Kube Steps
+
 kubectl create ns twitter-website
+kubectl apply -f ./00-global/00-twitter-website-configmap.yaml
 
-#postgres
-kubectl apply -f ./postgres-database/postgres-pv.yaml
-kubectl apply -f ./postgres-database/postgres-pvc.yaml
-kubectl apply -f ./postgres-database/postgres-service.yaml
-kubectl apply -f ./postgres-database/postgres-secret.yaml
-kubectl apply -f ./postgres-database/postgres-deployment.yaml
+## postgres
+kubectl apply -f ./01-postgres-database/01-postgres-pv.yaml
+kubectl apply -f ./01-postgres-database/01-postgres-pvc.yaml
+kubectl apply -f ./01-postgres-database/01-postgres-service.yaml
+kubectl apply -f ./01-postgres-database/01-postgres-secret.yaml
+kubectl apply -f ./01-postgres-database/01-postgres-deployment.yaml
 
-#zipkin
-kubectl apply -f ./zipkin/zipkin-service.yaml
-kubectl apply -f ./zipkin/zipkin-deployment.yaml
+## zipkin
+kubectl apply -f ./02-zipkin/02-zipkin-service.yaml
+kubectl apply -f ./02-zipkin/02-zipkin-deployment.yaml
 
-#rabbitmq
-kubectl apply -f ./rabbitmq/rabbitmq-service.yaml
-kubectl apply -f ./rabbitmq/rabbitmq-deployment.yaml
+## rabbitmq
+kubectl apply -f ./03-rabbitmq/03-rabbitmq-service.yaml
+kubectl apply -f ./03-rabbitmq/03-rabbitmq-deployment.yaml
 
-#zookeeper
-kubectl apply -f ./zookeeper/zookeeper-service.yaml
-kubectl apply -f ./zookeeper/zookeeper-deployment.yaml
-
-
-#eureka-server
-kubectl apply -f ./eureka-server/eureka-server-service.yaml
-kubectl apply -f ./eureka-server/eureka-server-deployment.yaml
-
-#config-server
-kubectl apply -f ./config-server/config-server-service.yaml
-kubectl apply -f ./config-server/config-server-deployment.yaml
+## zookeeper
+kubectl apply -f ./04-zookeeper/04-zookeeper-service.yaml
+kubectl apply -f ./04-zookeeper/04-zookeeper-deployment.yaml
 
 
-#api-gateway
-kubectl apply -f ./api-gateway/api-gateway-service.yaml
-kubectl apply -f ./api-gateway/api-gateway-deployment.yaml
+## eureka-server
+kubectl apply -f ./05-eureka-server/05-eureka-server-service.yaml
+kubectl apply -f ./05-eureka-server/05-eureka-server-deployment.yaml
+
+## config-server
+kubectl apply -f ./06-config-server/06-config-server-service.yaml
+kubectl apply -f ./06-config-server/06-config-server-deployment.yaml
 
 
-#broker
-kubectl apply -f ./broker/broker-service.yaml
-kubectl apply -f ./broker/broker-deployment.yaml
+## api-gateway
+kubectl apply -f ./07-api-gateway/07-api-gateway-service.yaml
+kubectl apply -f ./07-api-gateway/07-api-gateway-deployment.yaml
 
-#minio
-kubectl apply -f ./minio/minio-secret.yaml
-kubectl apply -f ./minio/minio-pvc.yaml
-kubectl apply -f ./minio/minio-pv.yaml
-kubectl apply -f ./minio/minio-service.yaml
-kubectl apply -f ./minio/minio-deployment.yaml
+## broker
+kubectl apply -f ./08-broker/08-broker-service.yaml
+kubectl apply -f ./08-broker/08-broker-deployment.yaml
 
+## websocket-service
+kubectl apply -f ./09-websocket-service/09-websocket-service-service.yaml
+kubectl apply -f ./09-websocket-service/09-websocket-service-deployment.yaml
 
+## user-service
+kubectl apply -f ./10-user-service/10-user-service-service.yaml
+kubectl apply -f ./10-user-service/10-user-service-deployment.yaml
 
-#user-service
-kubectl apply -f ./user-service/user-service-service.yaml
-kubectl apply -f ./user-service/user-service-deployment.yaml
+## email-service
+kubectl apply -f ./11-email-service/11-email-service-service.yaml
+kubectl apply -f ./11-email-service/11-email-service-deployment.yaml
 
-#websocket-service
-kubectl apply -f ./websocket-service/websocket-service-service.yaml
-kubectl apply -f ./websocket-service/websocket-service-deployment.yaml
+## notification-service
+kubectl apply -f ./12-notification-service/12-notification-service-service.yaml
+kubectl apply -f ./12-notification-service/12-notification-service-deployment.yaml
 
-#image-service 
-kubectl apply -f ./image-service/image-service-service.yaml
-kubectl apply -f ./image-service/image-service-deployment.yaml
+## chat-service
+kubectl apply -f ./13-chat-service/13-chat-service-service.yaml
+kubectl apply -f ./13-chat-service/13-chat-service-deployment.yaml
 
-#email-service
-kubectl apply -f ./email-service/email-service-service.yaml
-kubectl apply -f ./email-service/email-service-deployment.yaml
+## lists-service
+kubectl apply -f ./14-lists-service/14-lists-service-service.yaml
+kubectl apply -f ./14-lists-service/14-lists-service-deployment.yaml
 
-#notification-service
-kubectl apply -f ./notification-service/notification-service-service.yaml
-kubectl apply -f ./notification-service/notification-service-deployment.yaml
+## tag-service
+kubectl apply -f ./15-tag-service/15-tag-service-service.yaml
+kubectl apply -f ./15-tag-service/15-tag-service-deployment.yaml
 
-#chat-service
-kubectl apply -f ./chat-service/chat-service-service.yaml
-kubectl apply -f ./chat-service/chat-service-deployment.yaml
+## topic-service
+kubectl apply -f ./16-topic-service/16-topic-service-service.yaml
+kubectl apply -f ./16-topic-service/16-topic-service-deployment.yaml
 
-#lists-service
-kubectl apply -f ./lists-service/lists-service-service.yaml
-kubectl apply -f ./lists-service/lists-service-deployment.yaml
+## tweet-service
+kubectl apply -f ./17-tweet-service/17-tweet-service-service.yaml
+kubectl apply -f ./17-tweet-service/17-tweet-service-deployment.yaml
 
-#tag-service
-kubectl apply -f ./tag-service/tag-service-service.yaml
-kubectl apply -f ./tag-service/tag-service-deployment.yaml
+## image-service 
+kubectl apply -f ./18-image-service/18-image-service-service.yaml
+kubectl apply -f ./18-image-service/18-image-service-deployment.yaml
 
-#topic-service
-kubectl apply -f ./topic-service/topic-service-service.yaml
-kubectl apply -f ./topic-service/topic-service-deployment.yaml
+## minio
+kubectl apply -f ./19-minio/19-minio-secret.yaml
+kubectl apply -f ./19-minio/19-minio-pvc.yaml
+kubectl apply -f ./19-minio/19-minio-pv.yaml
+kubectl apply -f ./19-minio/19-minio-service.yaml
+kubectl apply -f ./19-minio/19-minio-deployment.yaml
 
-#tweet-service
-kubectl apply -f ./tweet-service/tweet-service-service.yaml
-kubectl apply -f ./tweet-service/tweet-service-deployment.yaml
-
-#frontend
-kubectl apply -f ./frontend/frontend-service.yaml
-kubectl apply -f ./frontend/frontend-deployment.yaml
-kubectl apply -f ./frontend/frontend-ingress.yaml
+## frontend
+kubectl apply -f ./20-frontend/20-frontend-service.yaml
+kubectl apply -f ./20-frontend/20-frontend-deployment.yaml
+kubectl apply -f ./20-frontend/20-frontend-ingress.yaml
 
 ## ---------
 ## Build MVN without tests
@@ -150,7 +161,7 @@ docker rm $(docker ps -a -q)
 # create betwork 
 docker network create -d overlay spring-swarm
 docker network create -d overlay postgres-swarm
-
+docker network create -d frontend-swarm-network
 # start stack  - docker stack deploy -c docker-stack.yml {NAME_OF_THE_STACK}
 
 docker stack deploy -c docker-stack.yml twitter
@@ -266,6 +277,7 @@ docker run -p 8761:8761 merikbest/twitter-spring-reactjs:eureka-server
 curl -i 'http://192.168.7.93:50440/api/v1/login'   -H 'Connection: keep-alive'   -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36'   -H 'Content-Type: application/json'   -H 'Accept: */*'   -H 'Sec-GPC: 1'   -H 'Origin: http://192.168.7.93:50440'   -H 'Sec-Fetch-Site: same-origin'   -H 'Sec-Fetch-Mode: cors'   -H 'Sec-Fetch-Dest: empty'   -H 'Referer: http://192.168.7.93:50440/login'   -H 'Accept-Language: en-US,en;q=0.9'   -H 'Cookie: PGADMIN_LANGUAGE=en'   --data-raw '{"accessKey":"minio-user","secretKey":"minio-password"}'   --compressed
 
 
+docker compose up --build --scale frontend=0
 
 ssh -L 8080:192.168.7.105:8080 vmuser@192.168.7.105
 ssh -t vmuser@192.168.7.105 "cd twitter-spring-reactjs; exec \$SHELL -l"
