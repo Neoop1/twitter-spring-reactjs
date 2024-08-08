@@ -40,9 +40,9 @@ spec:
                 name: global-config
                 key: EUREKA_DEFAULT_ZONE
           - name: REGISTER_WITH_EUREKA
-            value: false
+            value: 'false'
           - name: FETCH_REGISTRY
-            value: false                
+            value: 'false'               
           - name: ZIPKIN_HOST
             valueFrom:
               configMapKeyRef:

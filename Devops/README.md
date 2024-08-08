@@ -22,22 +22,26 @@ docker compose up tag-service
 docker compose up topic-service
 docker compose up tweet-service
 docker compose up frontend
+
+docker compose up traefik
 docker compose up nginxproxy 
+
+
 
 docker compose up createbuckets
 docker compose up minio
 
 docker compose up prometheus
 docker compose up grafana
-
+docker compose up cadvisor
 ## ---- ## 
 docker compose up postgres zipkin rabbitmq zookeeper
 docker compose up eureka-server  config-server api-gateway broker websocket-service
 docker compose up image-service email-service notification-service chat-service tag-service lists-service topic-service
 docker compose up user-service tweet-service
-docker compose up frontend 
+docker compose up frontend traefik
 docker compose up minio createbuckets nginxproxy
-docker compose up prometheus grafana
+docker compose up prometheus grafana cadvisor
 
 
 ## Kube Steps

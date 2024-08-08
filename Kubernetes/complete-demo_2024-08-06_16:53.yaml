@@ -8,8 +8,8 @@ metadata:
 data:
     EUREKA_HOST: eureka-server
     EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-    REGISTER_WITH_EUREKA: true
-    FETCH_REGISTRY: true
+    REGISTER_WITH_EUREKA: 'true'
+    FETCH_REGISTRY: 'true'
     BROKER_HOST: broker
     CONFIG_SERVER_HOST: config-server
     DATASOURCE_HOST: postgres
@@ -127,7 +127,6 @@ spec:
             - name: volume-from-config-map-script
               mountPath: "/docker-entrypoint-initdb.d"
               readOnly: true
-          restartPolicy: Always
           
       volumes:
         - name: postgres-stateful-data
@@ -451,9 +450,9 @@ spec:
                 name: global-config
                 key: EUREKA_DEFAULT_ZONE
           - name: REGISTER_WITH_EUREKA
-            value: false
+            value: 'false'
           - name: FETCH_REGISTRY
-            value: false                
+            value: 'false'            
           - name: ZIPKIN_HOST
             valueFrom:
               configMapKeyRef:

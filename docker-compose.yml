@@ -13,7 +13,7 @@ services:
             PGDATA: /data/postgres
         volumes:
             - postgres_prod:/data/postgres
-            - ./postgres:/docker-entrypoint-initdb.d #POSTGRES_MULTIPLE_DATABASE script 
+            - ./postgres:/docker-entrypoint-initdb.d #// POSTGRES_MULTIPLE_DATABASE script 
         ports:
             - "5432:5432"
         networks:
@@ -154,8 +154,8 @@ services:
             monitoring:
                 aliases:
                     - grafana
-    ## Test
-    cadvisor:
+  
+    cadvisor: #// Container Advisor exports information about running containers
       image: gcr.io/cadvisor/cadvisor
       hostname: cadvisor
       volumes:
@@ -174,15 +174,15 @@ services:
     prometheus:
         image: prom/prometheus
         container_name: prometheus
-        user: root # for - /var/run/docker.sock - security problem
+        user: root #// for - /var/run/docker.sock - security problem
         ports:
            # - "9090:9090"
              - "9091:9090"
         volumes:
-            - ./dashboard/prometheus-docker.yml:/etc/prometheus/prometheus.yml
-            - /var/run/docker.sock:/var/run/docker.sock:ro # for allow prometheus retrieving scrape targets from Docker Engine hosts.
+             - ./dashboard/prometheus-docker.yml:/etc/prometheus/prometheus.yml
+             - /var/run/docker.sock:/var/run/docker.sock:ro # for allow prometheus retrieving scrape targets from Docker Engine hosts.
            # -  prometheus_data:/prometheus
-           #- ./prometheus:/prometheus
+           # - ./prometheus:/prometheus
         networks:
             monitoring:
                 aliases:
@@ -703,7 +703,7 @@ services:
 
 
             
-    traefik:
+    traefik: #// reverse proxy and load balancer 
         image: docker.io/library/traefik:v3.1.1
         container_name: traefik
         ports:
@@ -724,7 +724,7 @@ services:
           #- --entrypoints.web.http.redirections.entrypoint.permanent=true
           #- --entrypoints.frontend-secure.address=:443
         volumes:
-          - /run/docker.sock:/run/docker.sock:ro
+           - /run/docker.sock:/run/docker.sock:ro
         #  - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
         #  - ./traefik/conf/:/etc/traefik/conf/
         #  - ./traefik/certs/:/etc/traefik/certs/

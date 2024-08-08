@@ -69,7 +69,6 @@ spec:
             - name: volume-from-config-map-script
               mountPath: "/docker-entrypoint-initdb.d"
               readOnly: true
-          restartPolicy: Always
           
       volumes:
         - name: postgres-stateful-data
