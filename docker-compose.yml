@@ -201,8 +201,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: false
-            FETCH_REGISTRY: false
+            REGISTER_WITH_EUREKA: 'false'
+            FETCH_REGISTRY: 'false'
             ZIPKIN_HOST: zipkin
         ports:
             - "8761:8761"
@@ -231,8 +231,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             ZIPKIN_HOST: zipkin
         #    MINIO-Access-Key: 
         #    MINIO-Secret-Key: 
@@ -265,8 +265,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         ports:
@@ -303,7 +303,7 @@ services:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
             REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            FETCH_REGISTRY: 'true'
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -342,8 +342,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -381,8 +381,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -422,8 +422,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -461,8 +461,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -500,8 +500,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -539,8 +539,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -578,8 +578,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
@@ -612,8 +612,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         ports:
@@ -645,8 +645,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: 'true'
+            FETCH_REGISTRY: 'true'
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         ports:

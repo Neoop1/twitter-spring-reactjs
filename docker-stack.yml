@@ -99,10 +99,10 @@ services:
     rabbitmq:
         image: rabbitmq:3.9.11-management-alpine
         hostname: rabbitmq
-        deploy:
-           placement:
-              constraints:
-                - "node.role==worker"
+        #deploy:
+           #placement:
+              #constraints:
+                #- "node.role==worker"
         #ports:
         #    - "5672:5672"
         #   - "15672:15672"
@@ -186,6 +186,18 @@ services:
             - GF_SECURITY_ADMIN_PASSWORD=admin
             - GF_PATHS_PROVISIONING=/etc/grafana/provisioning/
             - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/docker-micrometer-spring.json
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.grafana.rule=Host(`grafana.twitter.local`)"
+            - "traefik.http.routers.grafana.entrypoints=web"
+            - "traefik.http.routers.grafana.service=grafana"
+            - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+            - "traefik.docker.network=monitoring-swarm"
+        deploy:   
+           replicas: 1
+          #placement:
+          #  constraints:
+          #    - node.role == manager
         networks:
             monitoring-swarm:
                 aliases:
@@ -213,11 +225,23 @@ services:
         image: prom/prometheus
         #ports:
            #- "9090:9090"
-           # - "9091:9090"
         volumes:
             - ./dashboard/prometheus-dockerswarm.yml:/etc/prometheus/prometheus.yml
             - prometheus_data:/prometheus
           # - ./prometheus:/prometheus
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.prometheus.rule=Host(`prometheus.twitter.local`)"
+            - "traefik.http.routers.prometheus.entrypoints=web"
+            - "traefik.http.routers.prometheus.service=prometheus"
+            - "traefik.http.routers.prometheus.middlewares=traefik-auth" #admin:admin
+            - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+            - "traefik.docker.network=monitoring-swarm"
+        deploy:   
+           replicas: 1
+          #placement:
+          #  constraints:
+          #    - node.role == manager
         networks:
             monitoring-swarm:
                 aliases:
@@ -240,8 +264,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: false
-            FETCH_REGISTRY: false
+            REGISTER_WITH_EUREKA: 'false'
+            FETCH_REGISTRY: 'false'
             ZIPKIN_HOST: zipkin
         #ports:
             #- "8761:8761"
@@ -274,8 +298,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             ZIPKIN_HOST: zipkin
         #ports:
         #    - "8888:8888"
@@ -308,8 +332,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         #ports:
@@ -321,10 +345,12 @@ services:
             - "traefik.enable=true"
             - "traefik.docker.network=spring-swarm"
             - "traefik.http.routers.backend.entrypoints=web"
+            - "traefik.http.services.backend.loadbalancer.server.port=8000"
             - "traefik.http.routers.backend.rule=Host(`twitter.local`) && PathPrefix(`/websocket`) || PathPrefix(`/ui/v1`)"
             - "prometheus-job=api-gateway"
             - "prometheus-port=8000"
             - "prometheus-path=/actuator/prometheus"
+
         healthcheck:
            test: "curl --fail --silent localhost:8000/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -349,8 +375,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -390,8 +416,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -430,8 +456,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -472,8 +498,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -513,8 +539,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -550,8 +576,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -591,8 +617,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             DATASOURCE_HOST: postgres
@@ -630,8 +656,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             BROKER_HOST: broker
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
@@ -667,8 +693,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         deploy:
@@ -704,8 +730,8 @@ services:
         environment:
             EUREKA_HOST: eureka-server
             EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka"
-            REGISTER_WITH_EUREKA: true
-            FETCH_REGISTRY: true
+            REGISTER_WITH_EUREKA: "true"
+            FETCH_REGISTRY: "true"
             CONFIG_SERVER_HOST: config-server
             ZIPKIN_HOST: zipkin
         deploy:
@@ -752,6 +778,7 @@ services:
         command:
            - "--api.dashboard=true" # (Optional) Enable Dashboard, don't do in production
            - "--api.insecure=true"  # (Optional) Enable Dashboard, don't do in production
+
            - "--providers.docker"  
            - "--providers.docker.exposedbydefault=false" # (Optional) Enable this, if you want to expose all containers automatically
 
@@ -761,17 +788,34 @@ services:
           #- --entrypoints.web.http.redirections.entrypoint.scheme=https
           #- --entrypoints.web.http.redirections.entrypoint.permanent=true
           #- --entrypoints.frontend-secure.address=:443
+
+           - "traefik.enable=true"
+           - “traefik.http.routers.traefik-ui.rule=Host(`traefik.twitter.local`)”
+           - “traefik.http.routers.traefik-ui.service=api@internal”
+
+           - "--metrics.prometheus=true"
+           - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
+        ## //auth when connect to traefik Dashboard
+           - "traefik.http.routers.traefik-ui.middlewares=traefik-auth"
+           - “traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$gaS8tVEe$$MjqM8IlBvz2PRFEWcwha1/” #admin:admin
+          #- “traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_BASIC_AUTH}” #.env file 
+           - “traefik.http.middlewares.traefik-auth.basicauth.removeheader=true”
         volumes:
            - /run/docker.sock:/run/docker.sock:ro
         #  - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
         #  - ./traefik/conf/:/etc/traefik/conf/
         #  - ./traefik/certs/:/etc/traefik/certs/
         #environment:
-        #   - CF_DNS_API_TOKEN=cf-dns-api-token
+        #   - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+        #deploy:
+           #mode: global
+           #placement:
+              #constraints:
+                #- node.role == manager
         networks:
            - spring-swarm
            - monitoring-swarm
-         # - frontend-swarm-network
+           - frontend-swarm-network
         restart: unless-stopped
 
     frontend:   

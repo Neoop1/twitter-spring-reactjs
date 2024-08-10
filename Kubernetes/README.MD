@@ -25,8 +25,9 @@ https://medium.com/@tanmaybhandge/simplifying-service-exposure-in-on-premises-ku
 
 
 kubectl create -f https://raw.githubusercontent.com/tanmaybhandge/Nginx_ingress_Controller_Metallb/main/metallb.yaml
-kubectl create -f https://raw.githubusercontent.com/tanmaybhandge/Nginx_ingress_Controller_Metallb/main/ip-adress-pool.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/cloud/deploy.yaml
+kubectl create -f https://raw.githubusercontent.com/tanmaybhandge/Nginx_ingress_Controller_Metallb/main/ip-adress-pool.yaml
+
 
 
 
