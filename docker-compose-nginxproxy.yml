@@ -149,25 +149,39 @@ services:
             - GF_SECURITY_ADMIN_USER=admin
             - GF_SECURITY_ADMIN_PASSWORD=admin
             - GF_PATHS_PROVISIONING=/etc/grafana/provisioning/
-            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/micrometer-spring.json
+            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/docker-micrometer-spring.json
         networks:
             monitoring:
                 aliases:
                     - grafana
-
+    cadvisor: #// Container Advisor exports information about running containers
+      image: gcr.io/cadvisor/cadvisor
+      hostname: cadvisor
+      volumes:
+        - "/:/rootfs:ro"
+        - "/var/run:/var/run:ro"
+        - "/sys:/sys:ro"
+        - "/var/lib/docker/:/var/lib/docker:ro"
+        - "/dev/disk/:/dev/disk:ro"
+      ports:
+        - "8181:8080"
+      networks:
+        - spring
+        - monitoring
+        - postgres
  
     prometheus:
         image: prom/prometheus
         container_name: prometheus
-        user: root # for - /var/run/docker.sock - security problem
+        user: root #// for - /var/run/docker.sock - security problem
         ports:
            # - "9090:9090"
              - "9091:9090"
         volumes:
-            - ./dashboard/prometheus-docker.yml:/etc/prometheus/prometheus.yml
-            - /var/run/docker.sock:/var/run/docker.sock:ro # for allow prometheus retrieving scrape targets from Docker Engine hosts.
-           # -  prometheus_data:/prometheus
-           #- ./prometheus:/prometheus
+           - ./dashboard/prometheus-docker.yml:/etc/prometheus/prometheus.yml
+           - /var/run/docker.sock:/var/run/docker.sock:ro # for allow prometheus retrieving scrape targets from Docker Engine hosts.
+         # -  prometheus_data:/prometheus
+         # - ./prometheus:/prometheus
         networks:
             monitoring:
                 aliases:

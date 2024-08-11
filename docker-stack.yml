@@ -185,14 +185,15 @@ services:
             - GF_SECURITY_ADMIN_USER=admin
             - GF_SECURITY_ADMIN_PASSWORD=admin
             - GF_PATHS_PROVISIONING=/etc/grafana/provisioning/
-            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/docker-micrometer-spring.json
+            - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/dockerswarm-micrometer-spring.json
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.grafana.rule=Host(`grafana.twitter.local`)"
+            - "traefik.docker.network=monitoring-swarm"
             - "traefik.http.routers.grafana.entrypoints=web"
+            - "traefik.http.routers.grafana.rule=Host(`grafana.twitter.local`)" # grafana.twitter.local -> host file | Cannot be used with prefix like $site/grafana due to conflict with site login            
             - "traefik.http.routers.grafana.service=grafana"
             - "traefik.http.services.grafana.loadbalancer.server.port=3000"
-            - "traefik.docker.network=monitoring-swarm"
+
         deploy:   
            replicas: 1
           #placement:
@@ -203,40 +204,43 @@ services:
                 aliases:
                     - grafana
 
-    docker-api-socat: ## for prometheus - metric from docker sock
-        container_name: docker-api-socat
-        image: tecnativa/docker-socket-proxy:0.2
-        hostname: docker-api-socat
-        volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-        environment:
-          NODES: 1
-          NETWORKS: 1
-          SERVICES: 1
-          TASKS: 1
-        logging:
-          driver: none
-        networks:
-          monitoring-swarm:
-        #restart: unless-stopped  
+    #docker-api-socat: ## for prometheus - metric from docker sock
+    #    container_name: docker-api-socat
+    #    image: tecnativa/docker-socket-proxy:0.2
+    #    hostname: docker-api-socat
+    #    volumes:
+    #      - /var/run/docker.sock:/var/run/docker.sock
+    #    environment:
+    #      NODES: 1
+    #      NETWORKS: 1
+    #      SERVICES: 1
+    #      TASKS: 1
+    #    logging:
+    #      driver: none
+    #    networks:
+    #      monitoring-swarm:
+    #    #restart: unless-stopped  
 
 
     prometheus:
         image: prom/prometheus
         #ports:
            #- "9090:9090"
+        user: root #// for - /var/run/docker.sock - security problem
         volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
             - ./dashboard/prometheus-dockerswarm.yml:/etc/prometheus/prometheus.yml
             - prometheus_data:/prometheus
           # - ./prometheus:/prometheus
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.prometheus.rule=Host(`prometheus.twitter.local`)"
+            - "traefik.http.routers.prometheus.rule=Host(`prometheus.twitter.local`)" # prometheus.twitter.local -> host file 
             - "traefik.http.routers.prometheus.entrypoints=web"
             - "traefik.http.routers.prometheus.service=prometheus"
-            - "traefik.http.routers.prometheus.middlewares=traefik-auth" #admin:admin
+
             - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
             - "traefik.docker.network=monitoring-swarm"
+            - "traefik.http.routers.prometheus.middlewares=traefik-auth" # admin/password
         deploy:   
            replicas: 1
           #placement:
@@ -276,6 +280,7 @@ services:
             prometheus-job: eureka-server
             prometheus-port: 8761
             prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm
         healthcheck:
           test: "curl --fail --silent localhost:8761/actuator/health | grep UP || exit 1"
           interval: 20s
@@ -310,6 +315,7 @@ services:
             prometheus-job: config-server
             prometheus-port: 8888
             prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm
         healthcheck:
             test: "curl --fail http://config-server:8888/api-gateway/cloud/config/ || exit 1"
             interval: 20s
@@ -350,6 +356,7 @@ services:
             - "prometheus-job=api-gateway"
             - "prometheus-port=8000"
             - "prometheus-path=/actuator/prometheus"
+            - "prometheus-scrape-network=monitoring-swarm"
 
         healthcheck:
            test: "curl --fail --silent localhost:8000/actuator/health | grep UP || exit 1"
@@ -385,7 +392,8 @@ services:
         labels:
             prometheus-job: user-service
             prometheus-port: 8001
-            prometheus-path: /actuator/prometheus    
+            prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm   
         #ports:
         #   - "8001:8001"
         networks:
@@ -433,6 +441,7 @@ services:
             prometheus-job: tweet-service
             prometheus-port: 8002
             prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm
         healthcheck:
            test: "curl --fail --silent localhost:8002/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -472,7 +481,8 @@ services:
         labels:
             prometheus-job: topic-service
             prometheus-port: 8003
-            prometheus-path: /actuator/prometheus 
+            prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm 
         healthcheck:
            test: "curl --fail --silent localhost:8003/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -515,6 +525,7 @@ services:
             prometheus-job: tag-service
             prometheus-port: 8004
             prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm
         healthcheck:
            test: "curl --fail --silent localhost:8004/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -555,7 +566,8 @@ services:
         labels:
             prometheus-job: lists-service
             prometheus-port: 8005
-            prometheus-path: /actuator/prometheus   
+            prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm  
         healthcheck:
            test: "curl --fail --silent localhost:8005/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -597,7 +609,8 @@ services:
         labels:
             prometheus-job: chat-service
             prometheus-port: 8006
-            prometheus-path: /actuator/prometheus  
+            prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm
         healthcheck:
            test: "curl --fail --silent localhost:8006/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -638,7 +651,8 @@ services:
         labels:
             prometheus-job: notification-service
             prometheus-port: 8007
-            prometheus-path: /actuator/prometheus 
+            prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm
         healthcheck:
            test: "curl --fail --silent localhost:8007/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -674,7 +688,8 @@ services:
         labels:
             prometheus-job: email-service
             prometheus-port: 8020
-            prometheus-path: /actuator/prometheus   
+            prometheus-path: /actuator/prometheus 
+            prometheus-scrape-network: monitoring-swarm  
         healthcheck:
            test: "curl --fail --silent localhost:8020/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -711,6 +726,7 @@ services:
             prometheus-job: image-service
             prometheus-port: 8021
             prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm
         healthcheck:
            test: "curl --fail --silent localhost:8021/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -748,6 +764,7 @@ services:
             prometheus-job: websocket-service
             prometheus-port: 8022
             prometheus-path: /actuator/prometheus
+            prometheus-scrape-network: monitoring-swarm
         healthcheck:
            test: "curl --fail --silent localhost:8022/actuator/health | grep UP || exit 1"
            interval: 20s
@@ -783,23 +800,32 @@ services:
            - "--providers.docker.exposedbydefault=false" # (Optional) Enable this, if you want to expose all containers automatically
 
            - "--entrypoints.web.address=:80"
+
+           - "--metrics.prometheus=true"
+           - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
+
           #- --entrypoints.backend.address=:8000
           #- --entrypoints.web.http.redirections.entrypoint.to=frontend-secure
           #- --entrypoints.web.http.redirections.entrypoint.scheme=https
           #- --entrypoints.web.http.redirections.entrypoint.permanent=true
           #- --entrypoints.frontend-secure.address=:443
 
-           - "traefik.enable=true"
-           - “traefik.http.routers.traefik-ui.rule=Host(`traefik.twitter.local`)”
-           - “traefik.http.routers.traefik-ui.service=api@internal”
 
-           - "--metrics.prometheus=true"
-           - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
+        labels:
+
+           - "traefik.enable=true"
+           - "traefik.http.routers.traefik-ui.service=api@internal"
+           - "traefik.http.routers.traefik-ui.rule=Host(`traefik.twitter.local`)" # traefik.twitter.local -> host file 
+           - "traefik.http.services.traefik-ui.loadbalancer.server.port=8080"
+
+
         ## //auth when connect to traefik Dashboard
-           - "traefik.http.routers.traefik-ui.middlewares=traefik-auth"
-           - “traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$gaS8tVEe$$MjqM8IlBvz2PRFEWcwha1/” #admin:admin
-          #- “traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_BASIC_AUTH}” #.env file 
-           - “traefik.http.middlewares.traefik-auth.basicauth.removeheader=true”
+           - "traefik.http.routers.traefik-ui.middlewares=traefik-auth"     
+           - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$vO3/IDvg$$JrbhU9NSQub83/mQu9/fP1" # admin/password
+
+          #- "traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_BASIC_AUTH}" #.env file 
+          #- "traefik.http.middlewares.traefik-auth.basicauth.removeheader=true"
+
         volumes:
            - /run/docker.sock:/run/docker.sock:ro
         #  - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
