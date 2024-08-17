@@ -1,23 +1,31 @@
 server:
-    port: 8005
+    port: 8021
+
 spring:
     application:
-        name: lists-service
-    datasource:
-        url: jdbc:postgresql://localhost:5432/lists-test
-        username: postgres
-        password: root
-        driverClassName: org.postgresql.Driver
-    jpa:
-        hibernate:
-            ddl-auto: none
-        properties:
-            hibernate:
-                dialect: org.hibernate.dialect.PostgreSQLDialect
-    sql:
-        init:
-            mode: always
-            data-locations: classpath:sql-test/clear-lists-db.sql, classpath:sql-test/populate-lists-db.sql
+        name: image-service
+    zipkin:
+        base-url: http://${ZIPKIN_HOST:localhost}:9411
+
+
+amazon:
+    s3:
+        bucket:
+            name: twitterclonestorage
+    #aws:
+    #    access-key: AKIATP4TDBGPAJUNI5EY
+    #    secret-key: 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
+    aws:
+        accessKey: "minio-user"
+        secretKey: "minio-password"
+        region.static: us-east-1
+        service-endpoint: http://minio:9000 ##minio server docker
+        ##service-endpoint: http://minio.twitter-website.svc.cluster.local:9000 ##minio server kube 
+
+    
+
+
+
 eureka:
     client:
         service-url:
@@ -30,3 +38,4 @@ eureka:
         leaseRenewalIntervalInSeconds: ${LEASE_RENEWAL_INTERVAl_IN_SECONDS:10}
         leaseExpirationDurationInSeconds: ${LEASE_EXPIRATION_DURATIONIN_SECONDS:20}
         preferIpAddress: ${PREFER_IP_ADDRESS:true}
+
