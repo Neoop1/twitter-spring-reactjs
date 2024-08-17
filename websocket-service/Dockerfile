@@ -1,5 +1,5 @@
 FROM openjdk:17
-LABEL MAINTAINER Miroslav Khotinskiy <merikbest2015@gmail.com>
+LABEL MAINTAINER="Miroslav Khotinskiy <merikbest2015@gmail.com>"
 WORKDIR /app
 COPY target/websocket-service-0.0.1-SNAPSHOT.jar .
 COPY wait-for-it.sh .
