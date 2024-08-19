@@ -39,3 +39,12 @@ eureka:
         leaseExpirationDurationInSeconds: ${LEASE_EXPIRATION_DURATIONIN_SECONDS:20}
         preferIpAddress: ${PREFER_IP_ADDRESS:true}
 
+
+management:
+    endpoints:
+        health:
+         show-details: always
+        web:
+          base-path: /actuator
+          exposure:
+            include: health

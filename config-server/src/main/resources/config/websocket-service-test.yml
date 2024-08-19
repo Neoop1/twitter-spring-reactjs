@@ -20,3 +20,11 @@ eureka:
         preferIpAddress: ${PREFER_IP_ADDRESS:true}
 
 
+management:
+    endpoints:
+        health:
+         show-details: always
+        web:
+          base-path: /actuator
+          exposure:
+            include: health

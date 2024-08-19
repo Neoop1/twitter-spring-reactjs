@@ -30,3 +30,12 @@ eureka:
         leaseRenewalIntervalInSeconds: ${LEASE_RENEWAL_INTERVAl_IN_SECONDS:10}
         leaseExpirationDurationInSeconds: ${LEASE_EXPIRATION_DURATIONIN_SECONDS:20}
         preferIpAddress: ${PREFER_IP_ADDRESS:true}
+
+management:
+    endpoints:
+        health:
+         show-details: always
+        web:
+          base-path: /actuator
+          exposure:
+            include: health
