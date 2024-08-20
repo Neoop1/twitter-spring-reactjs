@@ -17,7 +17,7 @@ COPY --from=builder /app/application/ ./
 COPY wait-for-it.sh .
 RUN chmod +x ./wait-for-it.sh
 
-ENTRYPOINT ["./wait-for-it.sh", "-t", "30" ,"-s" , "zipkin:9411", "--","-XX:MaxRAMPercentage=85","org.springframework.boot.loader.JarLauncher"]
+ENTRYPOINT ["./wait-for-it.sh", "-t", "30" ,"-s" , "zipkin:9411", "--", "java", "-XX:MaxRAMPercentage=85","org.springframework.boot.loader.JarLauncher"]
 
 
 
