@@ -4,17 +4,9 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 import com.fasterxml.jackson.annotation.Json
 
+https://www.baeldung.com/jackson-jsonmappingexception
 
-
-
-Flyway failed to initialize: none of the following migration scripts locations could be found:
-
-        - classpath:db/migration/topic
-
-/home/user1/Desktop/Tools/DevOps/DevopsTwitter/twitter-spring-reactjs/topic-service/target/classes/db/migration/topic/
-/home/user1/Desktop/Tools/DevOps/DevopsTwitter/twitter-spring-reactjs/topic-service/src/db/migration/topic/
-
-
+## File Upload
 
 
 java.io.FileNotFoundException: MultipartFile resource [file] cannot be resolved to absolute file path
