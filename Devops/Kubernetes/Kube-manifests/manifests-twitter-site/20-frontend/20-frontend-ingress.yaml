@@ -48,12 +48,6 @@ spec:
               port:
                 number: 8000
 
-        - path: /ui/v1/image/upload
-          pathType: Prefix
-          backend:
-            service:
-              name: api-gateway
-              port:
-                number: 8000
+ 
                 
 
