@@ -1,0 +1,842 @@
+pipeline {
+    agent any
+    tools{
+        jdk 'jdk17'
+        nodejs 'node16'
+        
+    }
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+        DOCKER_HUB_USERNAME = 'neoop1' //for image taging 
+        PROJECT_NAME= 'twitter-website' //for image taging 
+        DOCKER_HOME_FOLDER= '/var/jenkins_home/tools/org.jenkinsci.plugins.docker.commons.tools.DockerTool/docker/bin/'
+        BUILD_NUMBER= 'latest' //for image taging 
+    }
+    stages {
+        //stage('clean workspace'){
+        //    steps{
+        //        cleanWs()
+        //    }
+        //}
+        stage('Checkout from Git'){
+            steps{
+                git branch: 'microservice', url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'
+            }
+        }
+
+        stage("Java - close / clear environment before test "){
+            steps{
+                script{
+                   try {
+                        sh  ''' 
+                            set +e
+                            kill $(ps aux | grep 'eureka-server-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'config-server-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'image-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'topic-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'user-service-*' | awk '{print $2}')  
+                            kill $(ps aux | grep 'tweet-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'tag-service-*' | awk '{print $2}')    
+                            kill $(ps aux | grep 'lists-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'chat-service-*' | awk '{print $2}')  
+                            kill $(ps aux | grep 'notification-service-*' | awk '{print $2}')  
+                            kill $(ps aux | grep 'websocket-service-*' | awk '{print $2}')    
+                            '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+        // ## close / clear environment before test
+        stage("kafka - close / clear environment before test "){
+            steps{
+                script{
+                   try {
+                       sh ''' docker stop $(docker ps | grep kafka) 2> /dev/null '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+        stage("rabbitmq - close / clear environment before test "){
+            steps{
+                script{
+                   try {
+                       sh ''' docker stop $(docker ps | grep rabbitmq) 2> /dev/null '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+        stage("zookeeper - close / clear environment before test "){
+            steps{
+                script{
+                   try {
+                       sh ''' docker stop $(docker ps | grep zookeeper) 2> /dev/null'''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+        stage("postgres - close / clear environment before test "){
+            steps{
+                script{
+                   try {
+                       sh ''' docker stop $(docker ps | grep postgres) 2> /dev/null ''' //  will stop postgres docker container !!! 
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+        stage("zipkin - close / clear environment before test "){
+            steps{
+                script{
+                   try {
+
+                       sh ''' docker stop $(docker ps | grep zipkin) 2> /dev/null '''
+
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+        // ## Load docker containers for test environment
+
+        stage("Run zipkin container for test environment"){
+            steps{
+                script{
+                       sh "docker run -d --name zipkin-test --rm -p 9411:9411 openzipkin/zipkin"
+                }
+            }
+        }
+
+        stage("Run postgres container for test environment"){
+            steps{
+                script{
+                       sh "docker run -d --name postgres-test --rm --env POSTGRES_DB=user --env POSTGRES_USER=postgres \
+                           --env PGUSER=postgres --env POSTGRES_PASSWORD=root --env PGDATA=/data/postgres \
+                           -v ./postgres/script_test/:/docker-entrypoint-initdb.d \
+                           -p 5432:5432 postgres:latest"
+                }
+            }
+        }
+
+        stage("Run zookeeper container for test environment"){
+            steps{
+                script{
+                       sh "docker run -d --name zookeeper-test --rm --net=host \
+                           --env KAFKA_OPTS='-Dzookeeper.admin.enableServer=false' \
+                           --env ZOOKEEPER_CLIENT_PORT=2181 \
+                           --env ZOOKEEPER_TICK_TIME=2000 -p 2181:2181 confluentinc/cp-zookeeper:7.0.1"
+                }
+            }
+        }
+
+        stage("Run rabbitmq container for test environment"){
+            steps{
+                script{
+                       sh "docker run -d --name rabbitmq-test --rm --net=host -p 5672:5672 -p 15672:15672  rabbitmq:3.9.11-management-alpine"
+                }
+            }
+        }
+
+
+        stage("Run kafka broker container for test environment"){
+            steps{
+                script{
+                       sh "docker run -d --name kafka-test --rm -p 9092:9092  --net=host --rm \
+                           --env KAFKA_BROKER_ID=1 \
+                           --env KAFKA_ADVERTISED_LISTENERS='PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092' \
+                           --env KAFKA_LISTENER_SECURITY_PROTOCOL_MAP='PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT' \
+                           --env KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+                           --env KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+                           --env KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+                           --env KAFKA_ZOOKEEPER_CONNECT='localhost:2181' confluentinc/cp-kafka:7.0.1"
+                }
+            }
+        }
+
+
+
+
+        stage("Install eureka-server for test environment"){
+            steps{
+                script{
+                    sh ''' ${mvn}/bin/mvn install -pl :eureka-server -am '''
+                }
+            }
+        }
+
+
+        stage("Run and Check eureka-server Availability"){
+            options {
+                timeout(time: 40, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' nohup java -jar ./eureka-server/target/eureka-server-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){    
+                        script {
+                            def status = sh (script: ''' sleep 20 && curl  localhost:8761/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage("Install config-server for test environment"){
+            steps{
+                script{
+                    sh ''' ${mvn}/bin/mvn install -pl :config-server -am ''' 
+                }
+            }
+        }
+
+        stage('Run and Check config-server Availability') {
+            options {
+                timeout(time: 40, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' nohup java -jar ./config-server/target/config-server-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 20 &&  curl localhost:8888/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }    
+            }
+        }
+
+        
+        // environment ready --- now start test
+
+        // ## Test - topic-service ##
+        stage("Run topic-service test"){
+            steps{
+                script{
+                    sh ''' ${mvn}/bin/mvn test -pl :topic-service -am '''
+                }
+            }
+        }
+
+        stage("close topic-service test environment "){
+            steps{
+                script{
+                   try {
+                        sh  '''
+                            kill $(ps aux | grep 'topic-service-*' | awk '{print $2}') 
+                            '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+        // ## Test - **user-service** ## for test need tweet-service ; tag-service
+
+ 
+        stage('Build and Check tweet-service Availability for user-service test') {
+            options {
+                timeout(time: 120, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :tweet-service -am -DskipTests '''
+                sh ''' nohup java -jar -Dspring.profiles.active=test ./tweet-service/target/tweet-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 40 &&  curl --fail --silent localhost:8002/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        stage('Run and Check tag-service Availability') {
+            options {
+                timeout(time: 60, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :tag-service -am -DskipTests '''
+                sh ''' nohup java -jar  -Dspring.profiles.active=test ./tag-service/target/tag-service-*.jar 2>/dev/null & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 20 &&  curl  localhost:8004/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }    
+                }
+            }
+        }
+
+
+
+
+        stage("Run user-service test"){
+            steps{
+                script{
+                       sh ''' ${mvn}/bin/mvn test -pl :user-service  -am '''
+                }
+            }
+        }
+
+        
+        stage("close user-service test environment "){
+            steps{
+                script{
+                   try {
+                        sh  '''
+                            set +e
+                            kill $(ps aux | grep 'user-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'tweet-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'tag-service-*' | awk '{print $2}') 
+                            '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+        // 
+
+
+
+
+        // ## Test - **tweet-service** ## for test need : websocket-service ; image-service ; lists-service
+
+        stage('Run and Check websocket-service Availability for tweet-service test') {
+            options {
+                timeout(time: 60, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :websocket-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./websocket-service/target/websocket-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 20 &&  curl localhost:8022/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }    
+            }
+        }
+
+        stage('Run and Check image-service Availability') {
+            options {
+                timeout(time: 40, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :image-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./image-service/target/image-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 20 &&  curl localhost:8021/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }    
+            }
+        }
+
+        stage('Run and Check lists-service Availability') {
+            options {
+                timeout(time: 120, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :lists-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./lists-service/target/lists-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 30 &&  curl localhost:8005/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }    
+            }
+        }
+
+
+        stage("Run tweet-service test"){
+            steps{
+                script{
+                       sh ''' ${mvn}/bin/mvn test -pl :tweet-service  -am '''
+                }
+            }
+        }
+
+
+
+        stage("close tweet-service test environment "){
+            steps{
+                script{
+                   try {
+                        sh  '''
+                            set +e
+                            kill $(ps aux | grep 'tweet-service-*' | awk '{print $2}')
+                            kill $(ps aux | grep 'websocket-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'image-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'lists-service-*' | awk '{print $2}') 
+                            '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
+        // ## Test - **tag-service** ## for test need : tweet-service 
+
+
+
+        stage('Build and Check tweet-service Availability for tag-service test') {
+            options {
+                timeout(time: 120, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :tweet-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./tweet-service/target/tweet-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 40 &&  curl --fail --silent localhost:8002/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        stage("Run tag-service test"){
+            steps{
+                script{
+                       sh ''' ${mvn}/bin/mvn test -pl :tag-service  -am '''
+                }
+            }
+        }
+
+        
+        stage("close tag-service test environment "){
+            steps{
+                script{
+                   try {
+                        sh  ''' 
+                            set +e
+                            kill $(ps aux | grep 'tag-service-*' | awk '{print $2}')
+                            kill $(ps aux | grep 'tweet-service-*' | awk '{print $2}') 
+                            '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+
+
+
+        // ## Test - **lists-service** ## for test need : tweet-service    
+        
+        stage('Build and Check tweet-service Availability for lists-service test') {
+            options {
+                timeout(time: 120, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :tweet-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./tweet-service/target/tweet-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 40 &&  curl --fail --silent localhost:8002/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        stage("Run lists-service test"){
+            steps{
+                script{
+                       sh ''' ${mvn}/bin/mvn test -pl :lists-service  -am '''
+                }
+            }
+        }
+
+        
+        stage("close lists-service test environment "){
+            steps{
+                script{
+                   try {
+                        sh  ''' 
+                            set +e
+                            kill $(ps aux | grep 'tweet-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'lists-service-*' | awk '{print $2}') 
+                            '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }       
+
+
+        // ## Test - **chat-service** ## for test need : tweet-service ; websocket-service
+
+        stage('Run and Check websocket-service Availability for chat-service test') {
+            options {
+                timeout(time: 60, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :websocket-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./websocket-service/target/websocket-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 20 &&  curl localhost:8022/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }    
+            }
+        }        
+        stage('Build and Check tweet-service Availability for chat-service test') {
+            options {
+                timeout(time: 120, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :tweet-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./tweet-service/target/tweet-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 40 &&  curl --fail --silent localhost:8002/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        stage("Run chat-service test"){
+            steps{
+                script{
+                       sh ''' ${mvn}/bin/mvn test -pl :chat-service  -am '''
+                }
+            }
+        }
+
+        
+        stage("close chat-service test environment "){
+            steps{
+                script{
+                   try {
+                        sh  ''' 
+                            set +e
+                            kill $(ps aux | grep 'tweet-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'websocket-service-*' | awk '{print $2}') 
+                            '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }               
+
+
+
+        // ## Test - **notification-service** ## for test need : tweet-service ; websocket-service ; user-service
+        
+        stage('Run and Check websocket-service Availability for notification-service test') {
+            options {
+                timeout(time: 60, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :websocket-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./websocket-service/target/websocket-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 20 &&  curl localhost:8022/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }    
+            }
+        }        
+        stage('Build and Check tweet-service Availability for notification-service test ') {
+            options {
+                timeout(time: 120, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :tweet-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./tweet-service/target/tweet-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 40 &&  curl --fail --silent localhost:8002/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+
+        stage('Run and Check user-service Availability') {
+            options {
+                timeout(time: 60, unit: 'SECONDS') 
+            }
+            steps {
+                sh ''' ${mvn}/bin/mvn install -pl :user-service -am -DskipTests '''
+                sh ''' nohup java -Dspring.profiles.active=test -jar ./user-service/target/user-service-*.jar & '''
+                waitUntil(initialRecurrencePeriod: 15000) {
+                    retry(count: 3){
+                        script {
+                            def status =  sh(script: '''sleep 20 &&  curl localhost:8001/actuator/health | grep UP ''', returnStdout: true)
+                            if ( status =~ status.find('"UP"') ){
+                                return true                      
+                            }else {
+                                println("Server not available yet!")
+                                return false
+                            }
+                        }
+                    }
+                }    
+            }
+        }   
+        
+        stage("Run notification-service test"){
+            steps{
+                script{
+                       sh ''' ${mvn}/bin/mvn test -pl :notification-service  -am '''
+                }
+            }
+        }
+        
+        
+        stage("close notification-service test environment "){
+            steps{
+                script{
+                   try {
+                        sh  ''' 
+                            set +e
+                            kill $(ps aux | grep 'tweet-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'websocket-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'user-service-*' | awk '{print $2}') 
+                            '''
+                       
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }   
+
+        // ## Kill Docker
+
+        stage("kafka - close / clear environment after test "){
+            steps{
+                script{
+                   try {
+                       sh ''' docker stop $(docker ps | grep kafka) 2> /dev/null '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+        stage("rabbitmq - close / clear environment after test "){
+            steps{
+                script{
+                   try {
+                       sh ''' docker stop $(docker ps | grep rabbitmq)" 2> /dev/null '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+        stage("zookeeper - close / clear environment after test "){
+            steps{
+                script{
+                   try {
+                       sh ''' docker stop $(docker ps | grep zookeeper) 2> /dev/null '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+        stage("postgres - close / clear environment after test "){
+            steps{
+                script{
+                   try {
+                       sh ''' docker stop $(docker ps | grep postgres) 2> /dev/null ''' //  will stop postgres docker container !!!
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+        stage("zipkin - close / clear environment after test "){
+            steps{
+                script{
+                   try {
+
+                       sh ''' docker stop $(docker ps | grep zipkin) 2> /dev/null '''
+
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }
+
+        stage("Java - close / clear environment after test "){
+            steps{
+                script{
+                   try {
+                        sh  '''
+                            set +e 
+                            kill $(ps aux | grep 'eureka-server-*' | awk '{print $2}')  
+                            kill $(ps aux | grep 'config-server-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'image-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'topic-service-*' | awk '{print $2}')  
+                            kill $(ps aux | grep 'user-service-*' | awk '{print $2}')  
+                            kill $(ps aux | grep 'tweet-service-*' | awk '{print $2}') 
+                            kill $(ps aux | grep 'tag-service-*' | awk '{print $2}')    
+                            kill $(ps aux | grep 'lists-service-*' | awk '{print $2}')  
+                            kill $(ps aux | grep 'chat-service-*' | awk '{print $2}')  
+                            kill $(ps aux | grep 'notification-service-*' | awk '{print $2}')  
+                            kill $(ps aux | grep 'websocket-service-*' | awk '{print $2}') 
+                            '''
+                    }
+                    catch (err) {
+                          echo err.getMessage()
+                    }
+                }
+            }
+        }        
+
+    }
+    
+}
+

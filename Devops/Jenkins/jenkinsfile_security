@@ -1,0 +1,76 @@
+pipeline {
+    agent any
+    tools{
+        jdk 'jdk17'
+        nodejs 'node16'
+        
+    }
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+        DOCKER_HUB_USERNAME = 'neoop1' //for image taging 
+        PROJECT_NAME= 'twitter-website' //for image taging 
+        DOCKER_HOME_FOLDER= '/var/jenkins_home/tools/org.jenkinsci.plugins.docker.commons.tools.DockerTool/docker/bin/'
+        BUILD_NUMBER= 'latest'
+    }
+    stages {
+        //stage('clean workspace'){
+        //    steps{
+        //        cleanWs()
+        //    }
+        //}
+        stage('Checkout from Git'){
+            steps{
+                git branch: 'microservice', url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'
+            }
+        }
+        stage("Sonarqube Analysis"){
+            steps{
+                withSonarQubeEnv('sonarqube-server') {
+                    sh ''' ${mvn}/bin/mvn clean package verify sonar:sonar -DskipTests -Dsonar.projectName=${PROJECT_NAME} \
+                    -Dsonar.projectKey=${PROJECT_NAME} '''
+                }
+            }
+        }
+        stage("quality gate"){
+           steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token' 
+                }
+            } 
+        }
+
+        stage('TRIVY FS SCAN') {
+            steps {
+                sh "trivy fs . > trivyfs.txt"
+            }
+        }
+
+        stage('Install Dependencies for frontend - for security check') {
+            steps {
+                sh "npm config set fetch-retry-mintimeout 20000" // slow internet connection
+                sh "npm config set fetch-retry-maxtimeout 120000" // slow internet connection
+                sh "npm config set legacy-peer-deps true"
+                sh "npm install ./frontend/"
+            }
+        }
+        stage('OWASP FS SCAN') {
+            steps {
+                dependencyCheck additionalArguments: '--scan . --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }    
+
+    }
+    post {
+     always {
+        emailext attachLog: true,
+            subject: "'${currentBuild.result}'",
+            body: "Project: ${env.JOB_NAME}<br/>" +
+                "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                "URL: ${env.BUILD_URL}<br/>",
+            to: 'test@server',                                
+            attachmentsPattern: 'trivyfs.txt,dependency-check-report.xml'
+        }
+    }
+   
+}
