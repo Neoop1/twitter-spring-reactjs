@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout from Git'){
             steps{
-                git branch: 'jenkins', url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'
+                git branch: 'jenkinsfiles', url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'
             }
         }
         stage('Security analysis  section') {
