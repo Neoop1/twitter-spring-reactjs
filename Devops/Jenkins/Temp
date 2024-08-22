@@ -1,14 +1,15 @@
 pipeline {
-    // don't use 'agent any'
-    // 'agent none' allows the job to continue on the same node with the same files
-    // agent none     
     agent any
     tools{
         jdk 'jdk17'
         nodejs 'node16'
     }
     environment {
-        DOCKER_HOME_FOLDER= '/var/jenkins_home/tools/org.jenkinsci.plugins.docker.commons.tools.DockerTool/docker/bin/' 
+        SCANNER_HOME=tool 'sonar-scanner'
+        DOCKER_HUB_USERNAME = 'neoop1' //for image taging 
+        PROJECT_NAME= 'twitter-website' //for image taging  //for Sonarqube Analysis
+        DOCKER_HOME_FOLDER= '/var/jenkins_home/tools/org.jenkinsci.plugins.docker.commons.tools.DockerTool/docker/bin/'
+        BUILD_NUMBER= 'latest' //for image taging 
     }
     stages {
         //stage('clean workspace'){
@@ -21,6 +22,86 @@ pipeline {
                 git branch: 'microservice', url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'
             }
         }
+
+        // ##### Security analysis  section ####
+
+        // docker run -d --name sonar -p 9000:9000 sonarqube:lts-community # README - Create SonarQube Token  
+        stage("Sonarqube Analysis"){ 
+            steps{
+                withSonarQubeEnv('sonarqube-server') {
+                    sh ''' ${mvn}/bin/mvn clean package verify sonar:sonar -DskipTests -Dsonar.projectName=${PROJECT_NAME} \
+                    -Dsonar.projectKey=${PROJECT_NAME} '''
+                }
+            }
+        }
+        // # README - Create SonarQube Webhooks  
+        stage("quality gate"){
+           steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token' 
+                }
+            } 
+        }
+
+        stage('Install Dependencies form frontend - for security check') {
+            steps {
+                dir('./frontend') { 
+                    sh "npm config set fetch-retry-mintimeout 20000" // slow internet connection
+                    sh "npm config set fetch-retry-maxtimeout 120000" // slow internet connection
+                    sh "npm config set legacy-peer-deps true"
+                    sh "npm install" //--package-lock
+                }
+            }
+        }
+
+        //TRIVY FS SCAN - Scan a filesystem (such as a host machine, a virtual machine image, or an unpacked container image filesystem).
+        stage('TRIVY FS SCAN') {
+            steps {
+                sh "trivy fs --format table -o trivy-fs-report.html ."
+            }
+        }
+
+        // Analysis Complete after 1291 seconds because of frontend dependencies
+        stage('OWASP FS SCAN') {
+            steps {
+                dependencyCheck additionalArguments: '--scan . --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }    
+
+        //build docker containers representative sample for trivy image check
+
+        stage("Docker Build eureka-server for trivy check"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh ''' docker build ./eureka-server/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-eureka-server:${BUILD_NUMBER} '''
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build frontend for trivy check"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh ''' docker build ./frontend/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-frontend:${BUILD_NUMBER} '''
+                    }
+                }
+            }
+        }
+
+       // test docker images with trivy
+        stage("TRIVY"){
+            steps{
+                sh ''' trivy image --format table -o trivy_frontend_image.html ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-frontend:${BUILD_NUMBER}  ''' 
+                sh ''' trivy image --format table -o trivy_microservice_image.html ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-eureka-server:${BUILD_NUMBER} '''
+            }
+        }
+ 
+
+
+        // ##### mvn tests section ####
 
         stage("Java - close / clear environment before test "){
             steps{
@@ -914,9 +995,327 @@ pipeline {
             }
         }
 
+
+
+
+        // ##### Docker Build Push section ####
+
+
+        stage("Mvn Build package **without tests**"){
+            steps{
+                withSonarQubeEnv('sonarqube-server') {
+                    sh ''' ${mvn}/bin/mvn clean package -DskipTests '''
+                }
+            }
+        }
+
+        // build docker containers
+        stage("Docker Build eureka-server"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./eureka-server/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-eureka-server:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build config-server"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./config-server/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-config-server:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build api-gateway"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./api-gateway/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-api-gateway:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build email-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./email-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-email-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build image-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./image-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-image-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build topic-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./topic-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-topic-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build user-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./user-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-user-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build tweet-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./tweet-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-tweet-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build tag-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./tag-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-tag-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build lists-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./lists-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-lists-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build chat-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./chat-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-chat-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build notification-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./notification-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-notification-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build websocket-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./websocket-service/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-websocket-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build grafana"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./dashboard/grafana/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-grafana:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker Build frontend"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker build ./frontend/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-frontend:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+   
+      // push docker containers   
+        stage("Docker PUSH eureka-server"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push  ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-eureka-server:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH config-server"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push  ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-config-server:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH api-gateway"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-api-gateway:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH email-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-email-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH image-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-image-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH topic-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-topic-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH user-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-user-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH tweet-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push  ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-tweet-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH tag-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-tag-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH lists-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-lists-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH chat-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-chat-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH notification-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-notification-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH websocket-service"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push  ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-websocket-service:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH grafana"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-grafana:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Docker PUSH frontend"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                       sh "docker push ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-frontend:${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
     }
+
     // Test mail server 
     // docker run -d --rm -p  1080:1080 -p 25:1025 maildev/maildev
+
 
     post {
      always {
@@ -926,9 +1325,8 @@ pipeline {
                 "Build Number: ${env.BUILD_NUMBER}<br/>" +
                 "URL: ${env.BUILD_URL}<br/>",
             to: 'test@localhost',                                
-            attachmentsPattern: ''
+            attachmentsPattern: 'trivy-fs-report.html,dependency-check-report.xml,trivy_frontend_image.html,trivy_microservice_image.html'
         }
     }
+   
 }
-
-

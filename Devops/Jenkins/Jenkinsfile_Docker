@@ -1,4 +1,7 @@
 pipeline {
+    // don't use 'agent any'
+    // 'agent none' allows the job to continue on the same node with the same files
+    // agent none 
     agent any
     tools{
         jdk 'jdk17'
@@ -36,7 +39,6 @@ pipeline {
                 script{
                     withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
                        sh "docker build ./eureka-server/. -t ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-eureka-server:${BUILD_NUMBER}"
-                       //sh "docker tag netflix neoop1/netflix:latest"
                     }
                 }
             }
@@ -335,6 +337,9 @@ pipeline {
         }
     }
 
+    // Test mail server 
+    // docker run -d --rm -p  1080:1080 -p 25:1025 maildev/maildev
+
     post {
      always {
         emailext attachLog: true,
@@ -342,8 +347,8 @@ pipeline {
             body: "Project: ${env.JOB_NAME}<br/>" +
                 "Build Number: ${env.BUILD_NUMBER}<br/>" +
                 "URL: ${env.BUILD_URL}<br/>",
-            to: 'test@server',                                
-            //attachmentsPattern: 'trivyfs.txt,trivy_frontend_image.txt,'
+            to: 'test@localhost',                                
+            //attachmentsPattern: ''
         }
-    }   
+    }
 }

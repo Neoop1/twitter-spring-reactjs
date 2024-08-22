@@ -1,13 +1,18 @@
 ## Errors 
 
+# Run Site Without web security (Chrome browser without CORS)
 Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://twitter.local/ui/v1/user/token. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 504.
 
-import com.fasterxml.jackson.annotation.Json
+**Linux**
+chromium --disable-web-security --user-data-dir=./ChromeDevSession
+**Windows**
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --user-data-dir="C:\tmpChromeSession"
 
-https://www.baeldung.com/jackson-jsonmappingexception
 
-## File Upload
 
+
+## File Upload error 
+**log from tweet-service**
 
 java.io.FileNotFoundException: MultipartFile resource [file] cannot be resolved to absolute file path
       at org.springframework.core.io.AbstractResource.getFile(AbstractResource.java:138) ~[spring-core-5.3.24.jar!/:5.3.24]

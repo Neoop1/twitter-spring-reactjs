@@ -7,17 +7,19 @@ docker network create -d overlay postgres-swarm
 docker network create -d frontend-swarm-network
 
 
-## Build MVN without tests
+## Build MVN without tests - mvn compile
 mvn clean package -DskipTests
 
-mvn compile
+
 
 ## Build Docker Images 
 docker compose -f docker-stack.yml build
-docker compose -f docker-stack.yml build config-server
+
+
+
 ## Push Docker Images 
 docker compose -f docker-stack.yml push 
-docker compose -f docker-stack.yml push image-service
+
 
 
 
@@ -25,13 +27,14 @@ docker compose -f docker-stack.yml push image-service
 
 docker stack deploy -c docker-stack.yml twitter
 
+# view stack 
+docker stack services twitter
 
 # update service if needed
 docker service update --force twitter_user-service
 docker service update --image <username>/<repo> <servicename>   
 docker service update --image neoop1/twitter-nginxproxy-service:v0.5 twitter_nginxproxy 
-# view stack 
-docker stack services twitter
+
 
 
 # rmove service 
@@ -53,6 +56,9 @@ docker service logs -f twitter_frontend
 
 
 ## Temp
+
+docker compose -f docker-stack.yml build config-server
+docker compose -f docker-stack.yml push image-service
 
 twitter_api-gateway            replicated   1/1        neoop1/twitter-api-gateway:latest            
 twitter_broker                 replicated   1/1        confluentinc/cp-kafka:7.0.1                  
@@ -81,3 +87,16 @@ twitter_user-service           replicated   1/1        neoop1/twitter-user-servi
 twitter_websocket-service      replicated   1/1        neoop1/twitter-websocket-service:latest      
 twitter_zipkin                 replicated   1/1        openzipkin/zipkin:latest                     
 twitter_zookeeper              replicated   1/1        confluentinc/cp-zookeeper:7.0.1
+
+
+
+
+# Temp
+
+# Run Site Without web security (Chrome browser without CORS)
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://twitter.local/ui/v1/user/token. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 504.
+
+**Linux**
+chromium --disable-web-security --user-data-dir=./ChromeDevSession
+**Windows**
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --user-data-dir="C:\tmpChromeSession"

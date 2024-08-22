@@ -128,7 +128,7 @@ services:
         networks:
             - spring
         #healthcheck:
-        #   test: /kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1
+        #   test: "/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1"
         #   start_period: 20s
         #   interval: 1s
         #   timeout: 60s
@@ -144,7 +144,7 @@ services:
             - grafana_data:/var/lib/grafana
             #- ./grafana:/var/lib/grafana
         depends_on:
-            - zookeeper
+            - prometheus
         environment:
             - GF_SECURITY_ADMIN_USER=admin
             - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -247,10 +247,12 @@ services:
             prometheus-port: 8888
             prometheus-path: /actuator/prometheus
         depends_on:
-            - zipkin
-            - eureka-server
+            zipkin:
+                condition: service_started
+            eureka-server:
+                condition: service_healthy
         healthcheck:
-            test: curl --fail http://config-server:8888/api-gateway/cloud/config/ || exit 1
+            test: curl --fail http://config-server:8888/api-gateway/cloud/config/ || exit 1 ##localhost:8888/actuator/health
             interval: 60s
             retries: 5
             start_period: 20s

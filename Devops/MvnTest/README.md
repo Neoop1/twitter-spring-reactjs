@@ -1,12 +1,6 @@
 # Host
 127.0.0.1 Twitter.local
 
-# Run Site Without web security (Chrome browser without CORS)
-# Linux
-chromium --disable-web-security --user-data-dir=./ChromeDevSession
-# Windows 
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --user-data-dir="C:\tmpChromeSession"
-
 
 # kubernetes/ingress logs
 
@@ -65,48 +59,48 @@ mvn test -pl :topic-service -am
 user-service 
 mvn test -pl :user-service -am 
 #####################
-java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.
-java -  -Dspring.profiles.active=test ./tag-service/target/tag-service-0.0.1-SNAPSHOT.
+java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.jar
+java -  -Dspring.profiles.active=test ./tag-service/target/tag-service-0.0.1-SNAPSHOT.jar
 #####################
 
-kill $(ps aux | grep 'tag-service-*.' | awk '{print $2}')
+
 
 
 tweet-service 
 mvn test -pl :tweet-service -am 
 #####################
-java -  -Dspring.profiles.active=test ./lists-service/target/lists-service-0.0.1-SNAPSHOT.
-java -  -Dspring.profiles.active=test ./websocket-service/target/websocket-service-0.0.1-SNAPSHOT.
-java -  -Dspring.profiles.active=test ./image-service/target/image-service-0.0.1-SNAPSHOT.
+java -  -Dspring.profiles.active=test ./lists-service/target/lists-service-0.0.1-SNAPSHOT.jar
+java -  -Dspring.profiles.active=test ./websocket-service/target/websocket-service-0.0.1-SNAPSHOT.jar
+java -  -Dspring.profiles.active=test ./image-service/target/image-service-0.0.1-SNAPSHOT.jar
 #####################
 
 tag-service +
 mvn test -pl :tag-service -am 
 #####################
-java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.
+java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.jar
 #####################
 
 
 mvn test -pl :lists-service -am
 #####################
-java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.
+java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.jar
 #####################
 
 
 chat-service +
 mvn test -pl :chat-service -am
 #####################
-java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.
-java -  -Dspring.profiles.active=test ./websocket-service/target/websocket-service-0.0.1-SNAPSHOT.
+java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.jar
+java -  -Dspring.profiles.active=test ./websocket-service/target/websocket-service-0.0.1-SNAPSHOT.jar
 #####################
 
 
 notification-service 
 mvn test -pl :notification-service  -am
 #####################
-java -  -Dspring.profiles.active=test ./websocket-service/target/websocket-service-0.0.1-SNAPSHOT.
-java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.
-java -  -Dspring.profiles.active=test ./user-service/target/user-service-0.0.1-SNAPSHOT.
+java -  -Dspring.profiles.active=test ./websocket-service/target/websocket-service-0.0.1-SNAPSHOT.jar
+java -  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-0.0.1-SNAPSHOT.jar
+java -  -Dspring.profiles.active=test ./user-service/target/user-service-0.0.1-SNAPSHOT.jar
 #####################
 
 
@@ -141,12 +135,12 @@ mvn clean package -DskipTests
 
 
 mvn install -pl :eureka-server -am            
-java - ./eureka-server/target/eureka-server-0.0.1-SNAPSHOT.
+java - ./eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar
 
-nohup java - ./eureka-server/target/eureka-server-0.0.1-SNAPSHOT.       
+nohup java - ./eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar
             
 mvn install -pl :config-server -am  
-java - ./config-server/target/config-server-0.0.1-SNAPSHOT.
+java - ./config-server/target/config-server-0.0.1-SNAPSHOT.jar
             
 email-service
 mvn install -pl :email-service -am
@@ -156,12 +150,12 @@ mvn install -pl :image-service -am
 
 
 ####
-java -  -Dspring.profiles.active=test ./topic-service/target/topic-service-0.0.1-SNAPSHOT.
+java -  -Dspring.profiles.active=test ./topic-service/target/topic-service-0.0.1-SNAPSHOT.jar
 #####
 
 
 mvn install -pl :api-gateway  -am
-java - ./api-gateway/target/api-gateway-0.0.1-SNAPSHOT.
+java - ./api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar
 
 
 
@@ -170,7 +164,7 @@ java - ./api-gateway/target/api-gateway-0.0.1-SNAPSHOT.
  127.0.0.1 tweet-service
 
 
-java -  -Dspring.profiles.active=test ./websocket-service/target/websocket-service-0.0.1-SNAPSHOT.
+java -  -Dspring.profiles.active=test ./websocket-service/target/websocket-service-0.0.1-SNAPSHOT.jar
 
  127.0.0.1 websocket-service 
  127.0.0.1 lists-service
@@ -305,6 +299,7 @@ docker run  --env PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmi
 
 
 # Temp
+kill $(ps aux | grep 'tag-service-*.' | awk '{print $2}')
 
 nohup java -jar  -Dspring.profiles.active=test ./user-service/target/user-service-*.jar &
 nohup java -jar  -Dspring.profiles.active=test ./tweet-service/target/tweet-service-*.jar &

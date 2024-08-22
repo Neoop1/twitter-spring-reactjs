@@ -781,6 +781,7 @@ services:
     #    hostname: nginxproxy
     #    networks:
     #        - spring-swarm
+    #        - frontend-swarm-network
     #    ports:
     #      - "80:80"
 
@@ -804,7 +805,6 @@ services:
            - "--metrics.prometheus=true"
            - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
 
-          #- --entrypoints.backend.address=:8000
           #- --entrypoints.web.http.redirections.entrypoint.to=frontend-secure
           #- --entrypoints.web.http.redirections.entrypoint.scheme=https
           #- --entrypoints.web.http.redirections.entrypoint.permanent=true
