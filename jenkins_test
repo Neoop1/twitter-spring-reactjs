@@ -1,0 +1,24 @@
+pipeline {
+    agent any
+    tools{
+        jdk 'jdk17'
+        nodejs 'node16'
+        
+    }
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+        DOCKER_HUB_USERNAME = 'neoop1' //for image taging 
+        PROJECT_NAME= 'twitter-website' //for image taging 
+        DOCKER_HOME_FOLDER= '/var/jenkins_home/tools/org.jenkinsci.plugins.docker.commons.tools.DockerTool/docker/bin/'
+        BUILD_NUMBER= 'latest'
+    }
+    stages {
+        stage('Checkout from Git'){
+            steps{
+                git branch: 'microservice', url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'
+            }
+        }
+      
+    }
+    
+}
