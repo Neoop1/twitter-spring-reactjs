@@ -233,6 +233,7 @@ Temp:
 Test mail server 
 docker run -d --rm -p  1080:1080 -p 25:1025 maildev/maildev
 
+plugin - Simple Theme
 
 Sites:
 https://mrcloudbook.com/jenkins-ci-cd-dotnet-webapp-devsecops-project/

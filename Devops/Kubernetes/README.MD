@@ -135,6 +135,11 @@ kubectl apply -f ./20-frontend/20-frontend-ingress.yaml
 
 
 -Temp
+
+## Generate Kubernetes Manifests from docker compose file 
+https://hackernoon.com/how-to-generate-kubernetes-manifests-with-a-single-command
+https://github.com/kubernetes/kompose
+
 ###
 find ./Kube-manifests/manifests-twitter-site/ -type f -exec printf '---\n' {} \; -exec cat {} \; -exec printf '\n' \; >> ./complete-demo.yaml 2>/dev/null
 ####
@@ -145,3 +150,6 @@ find ./Kube-manifests/manifests-twitter-site/ -type f -printf '%h\0%d\0%p\n' | s
     xargs cat >> ./complete-demo.yaml 2>/dev/null
 done
 ####
+
+
+--dry-run=client flag to preview the object that would be sent to your cluster, without really submitting it.

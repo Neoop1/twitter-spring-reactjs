@@ -1,32 +1,95 @@
-pipeline {
-    agent any
-
+node {   
     stages {
         stage('Checkout from Git'){
             steps{
-                git branch: 'jenkinsfiles', url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'
+                git branch: 'Jenkins', url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'
             }
         }
         stage('Security analysis  section') {
             steps {
                 script{
-                      load "./Devops/Jenkins/jenkinsfile_security"
+                      load "./jenkinsfile_security"
                 }
             }
         }
         stage('Java MVN tests section') {
             steps {
                 script{
-                      load "./Devops/Jenkins/jenkinsfile_mvntest"
+                      load "./jenkinsfile_mvntest"
                 }
             }
         }
         stage('Docker Build Push section') {
             steps {
                 script{
-                      load "./Devops/Jenkins/jenkinsfile_Docker"
+                      load "./jenkinsfile_Docker"
                 }
             }
         }
+    }
+}
+
+
+
+// put this file in the branches of the application/software repository
+
+node {    
+    //checkout main project files
+    // need to manually checkout in scripted pipeline (differs from declarative pipeline which checkouts by default)
+
+    //checkout devops repository (other repository)
+    sh 'mkdir -p devops'
+	dir("devops")
+    {
+        script{
+            git branch: "Jenkins", 
+                url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'          
+        }
+    }
+    
+    // Security analysis section
+
+    // pass the environment variables to new pipeline
+    //withEnv(["COMMIT=${scmVars.GIT_COMMIT}","BRANCH=${scmVars.GIT_BRANCH}"]) {    
+        // load Jenkinsfile Pipeline file from devops repository  
+
+        load './jenkinsfile_security'  
+    //}
+
+
+    // Java MVN tests section
+
+    // pass the environment variables to new pipeline
+    //withEnv(["COMMIT=${scmVars.GIT_COMMIT}","BRANCH=${scmVars.GIT_BRANCH}"]) {    
+        // load Jenkinsfile Pipeline file from devops repository  
+
+        load './jenkinsfile_mvntest'  
+    //}
+
+    // Java Docker Build Push section
+
+    // pass the environment variables to new pipeline
+    //withEnv(["COMMIT=${scmVars.GIT_COMMIT}","BRANCH=${scmVars.GIT_BRANCH}"]) {    
+        // load Jenkinsfile Pipeline file from devops repository  
+
+        load './jenkinsfile_Docker'  
+    //}
+
+} 
+node {
+    script{
+            git branch: "Jenkins", 
+                url: 'https://github.com/Neoop1/twitter-spring-reactjs.git'          
+        }
+    stage('Build') {
+        load './jenkins_test'  
+    }
+    stage('Test') {
+        load './jenkinsfile_mvntest'
+
+    }
+    stage('Deploy') {
+        load './jenkinsfile_Docker'  
+        
     }
 }
