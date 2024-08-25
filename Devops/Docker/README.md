@@ -62,9 +62,18 @@ docker compose up user-service tweet-service
 docker compose up frontend traefik
 docker compose up minio createbuckets nginxproxy
 docker compose up prometheus grafana cadvisor
+## --build ##
+docker compose up postgres zipkin rabbitmq zookeeper
+docker compose up --build eureka-server  config-server api-gateway broker websocket-service
+docker compose up --build image-service email-service notification-service chat-service tag-service lists-service topic-service
+docker compose up --build user-service tweet-service
+docker compose up --build minio createbuckets 
+docker compose up frontend traefik
+
+docker compose up --build prometheus grafana cadvisor
 
 
-
+docker compose up --build nginxproxy
 # Stop all the containers
 
 docker stop $(docker ps -a -q)
