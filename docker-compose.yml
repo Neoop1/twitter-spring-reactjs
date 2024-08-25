@@ -85,6 +85,7 @@ services:
             - "9411:9411"
         networks:
             - spring
+            - monitoring
         restart: unless-stopped
 
     rabbitmq:

@@ -15,7 +15,12 @@ scrape_configs:
       static_configs:
         - targets: ['cadvisor:8080'] 
 
-        
+    - job_name: 'zipkin'
+      scrape_interval: 5s
+      metrics_path: '/prometheus'
+      static_configs:
+       - targets: ['zipkin:9411']   
+            
     - job_name: "docker-containers"
       #metrics_path: '/actuator/prometheus'
       docker_sd_configs:
