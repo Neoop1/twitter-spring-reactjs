@@ -1,2 +1,2 @@
 FROM grafana/grafana
-COPY ./provisioning /etc/grafana/provisioning
+COPY ./data/ /etc/grafana/

@@ -39,7 +39,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -127,7 +127,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "editorMode": "code",
           "expr": "time() - container_last_seen{name=\"postgres\"} OR on() vector(0)",
@@ -140,7 +140,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "editorMode": "builder",
           "expr": "",
@@ -157,7 +157,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -245,7 +245,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "editorMode": "code",
           "expr": "time() - container_last_seen{name=\"zookeeper\"} OR on() vector(0)",
@@ -258,7 +258,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "",
           "hide": false,
@@ -273,7 +273,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -361,7 +361,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "editorMode": "code",
           "expr": "time() - container_last_seen{name=\"zipkin\"} OR on() vector(0)",
@@ -374,7 +374,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "",
           "hide": false,
@@ -389,7 +389,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -477,7 +477,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "editorMode": "code",
           "expr": "time() - container_last_seen{name=\"frontend\"} OR on() vector(0)",
@@ -490,7 +490,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "",
           "hide": false,
@@ -505,7 +505,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -593,7 +593,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "editorMode": "code",
           "expr": "time() - container_last_seen{name=\"broker\"} OR on() vector(0)",
@@ -606,7 +606,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "",
           "hide": false,
@@ -621,7 +621,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -676,7 +676,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -696,7 +696,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "description": "The sum of the number of runnable entities queued to available processors and the number of runnable entities running on the available processors averaged over a period of time",
       "fieldConfig": {
@@ -782,7 +782,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "system_load_average_1m",
           "format": "time_series",
@@ -798,7 +798,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -878,7 +878,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "process_cpu_usage",
           "format": "time_series",
@@ -893,7 +893,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -948,7 +948,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -968,7 +968,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1023,7 +1023,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1043,7 +1043,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1098,7 +1098,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1118,7 +1118,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1173,7 +1173,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1193,7 +1193,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1248,7 +1248,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1268,7 +1268,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1323,7 +1323,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1343,7 +1343,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1398,7 +1398,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1418,7 +1418,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1473,7 +1473,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1493,7 +1493,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1548,7 +1548,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1568,7 +1568,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1623,7 +1623,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1643,7 +1643,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1698,7 +1698,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1718,7 +1718,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1773,7 +1773,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -1793,7 +1793,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "description": "The peak live thread count since the Java virtual machine started or peak was reset",
       "fieldConfig": {
@@ -1879,7 +1879,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "jvm_threads_peak_threads",
           "format": "time_series",
@@ -1895,7 +1895,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -1975,7 +1975,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "jvm_memory_used_bytes",
           "format": "time_series",
@@ -1990,7 +1990,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "fieldConfig": {
         "defaults": {
@@ -2070,7 +2070,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "jvm_gc_live_data_size_bytes",
           "format": "time_series",
@@ -2081,7 +2081,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "jvm_gc_max_data_size_bytes",
           "format": "time_series",
@@ -2096,7 +2096,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "description": "The current number of live daemon threads",
       "fieldConfig": {
@@ -2182,7 +2182,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "jvm_threads_daemon_threads",
           "format": "time_series",
@@ -2198,7 +2198,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "description": "The uptime of the Java virtual machine",
       "fieldConfig": {
@@ -2265,7 +2265,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "process_uptime_seconds",
           "format": "time_series",
@@ -2280,7 +2280,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "description": "The starttime of the Java virtual machine",
       "fieldConfig": {
@@ -2347,7 +2347,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "process_start_time_seconds * 1000",
           "format": "time_series",
@@ -2362,7 +2362,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "description": "Number of error level events that made it to the logs",
       "fieldConfig": {
@@ -2433,7 +2433,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "expr": "logback_events_total{level=\"error\"}",
           "format": "time_series",
@@ -2449,7 +2449,7 @@
       "collapsed": true,
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "gridPos": {
         "h": 1,
@@ -2462,7 +2462,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "The number of processors available to the Java virtual machine",
           "fieldConfig": {
@@ -2528,7 +2528,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "system_cpu_count",
               "format": "time_series",
@@ -2544,7 +2544,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Number of trace level events that made it to the logs",
           "fieldConfig": {
@@ -2610,7 +2610,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "logback_events_total{level=\"trace\"}",
               "format": "time_series",
@@ -2625,7 +2625,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Number of debug level events that made it to the logs",
           "fieldConfig": {
@@ -2691,7 +2691,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "logback_events_total{level=\"debug\"}",
               "format": "time_series",
@@ -2707,7 +2707,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Number of warn level events that made it to the logs",
           "fieldConfig": {
@@ -2773,7 +2773,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "logback_events_total{level=\"warn\"}",
               "format": "time_series",
@@ -2788,7 +2788,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Number of info level events that made it to the logs",
           "fieldConfig": {
@@ -2854,7 +2854,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "logback_events_total{level=\"info\"}",
               "format": "time_series",
@@ -2869,7 +2869,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "The current number of live threads including both daemon and non-daemon threads",
           "fieldConfig": {
@@ -2954,7 +2954,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_threads_live_threads",
               "format": "time_series",
@@ -2970,7 +2970,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "An estimate of the memory that the Java virtual machine is using for this buffer pool",
           "fieldConfig": {
@@ -3055,7 +3055,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_buffer_memory_used_bytes",
               "format": "time_series",
@@ -3071,7 +3071,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "fieldConfig": {
             "defaults": {
@@ -3150,7 +3150,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_gc_memory_promoted_bytes_total",
               "format": "time_series",
@@ -3167,7 +3167,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "refId": "A"
         }
@@ -3179,7 +3179,7 @@
       "collapsed": true,
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "gridPos": {
         "h": 1,
@@ -3192,7 +3192,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "An estimate of the number of buffers in the pool",
           "fieldConfig": {
@@ -3277,7 +3277,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_buffer_count_buffers",
               "format": "time_series",
@@ -3293,7 +3293,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "The amount of used memory",
           "fieldConfig": {
@@ -3378,7 +3378,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_memory_used_bytes",
               "format": "time_series",
@@ -3394,7 +3394,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "An estimate of the total capacity of the buffers in this pool",
           "fieldConfig": {
@@ -3479,7 +3479,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_buffer_total_capacity_bytes",
               "format": "time_series",
@@ -3495,7 +3495,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "The maximum amount of memory in bytes that can be used for memory management",
           "fieldConfig": {
@@ -3580,7 +3580,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_memory_max_bytes",
               "format": "time_series",
@@ -3596,7 +3596,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "The amount of memory in bytes that is committed for  the Java virtual machine to use",
           "fieldConfig": {
@@ -3681,7 +3681,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_memory_committed_bytes",
               "format": "time_series",
@@ -3699,7 +3699,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "refId": "A"
         }
@@ -3711,7 +3711,7 @@
       "collapsed": true,
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "gridPos": {
         "h": 1,
@@ -3724,7 +3724,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Max size of old generation memory pool",
           "fieldConfig": {
@@ -3809,7 +3809,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_gc_max_data_size_bytes",
               "format": "time_series",
@@ -3825,7 +3825,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Size of old generation memory pool after a full GC",
           "fieldConfig": {
@@ -3910,7 +3910,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_gc_live_data_size_bytes",
               "format": "time_series",
@@ -3926,7 +3926,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Time spent in GC pause",
           "fieldConfig": {
@@ -4011,7 +4011,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_gc_pause_seconds_count",
               "format": "time_series",
@@ -4027,7 +4027,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Incremented for an increase in the size of the young generation memory pool after one GC to before the next",
           "fieldConfig": {
@@ -4112,7 +4112,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "jvm_gc_memory_allocated_bytes_total",
               "format": "time_series",
@@ -4130,7 +4130,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "refId": "A"
         }
@@ -4142,7 +4142,7 @@
       "collapsed": true,
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "twitter-website-metrics"
       },
       "gridPos": {
         "h": 1,
@@ -4155,7 +4155,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Count of servlet requests",
           "fieldConfig": {
@@ -4240,7 +4240,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "http_server_requests_seconds_count",
               "format": "time_series",
@@ -4256,7 +4256,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "description": "Timer of servlet requests",
           "fieldConfig": {
@@ -4341,7 +4341,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "twitter-website-metrics"
               },
               "expr": "http_server_requests_seconds_sum",
               "format": "time_series",
@@ -4359,7 +4359,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "twitter-website-metrics"
           },
           "refId": "A"
         }
